@@ -52,7 +52,8 @@ def harvest(s):
     event = s['event'] if s['phase'] == 3 else None
     if s['phase'] == 1:
         return {'name': 'Carottes pour les deux journées', 'plots': 6, 'yield': 30, 'quantity': 180, 'unit': 'caisses', 'need': 180}
-    if event == 'inondation':
+    planned = s['second']
+    if event == 'inondation' or planned and planned['id'] == 'secours':
         return {'name': 'Légumes surgelés de réserve', 'plots': 6, 'yield': 15, 'quantity': 90, 'unit': 'caisses', 'need': 90}
     potato = s['first' if s['phase'] == 1 else 'second']
     if potato and potato['id'] in POTATO:
