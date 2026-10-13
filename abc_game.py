@@ -95,7 +95,7 @@ def waste(s):
     return max(0, SERVICES[s['service']][1] + SELF_SERVICE[s.get('self_service', 'tout')][1])
 
 def initial():
-    return dict(debate_votes={}, debate_decision=None, waste_reviewed=False, climate_ack=False, animal_offer='boeuf', beef_source='regional', meat_source=None, original_second=None, reviewed=False, day1=None, day2=None, phase=1, event=None, started=time.time(), hint=False, first=None, second=None, service=None, self_service='tout', measure=False, grams_done=False, production=None, harvest_done=False, supply_done=False, supply_strategy=None, approvals={'supplier': False, 'students': False})
+    return dict(final_card_visible=False, debate_votes={}, debate_decision=None, waste_reviewed=False, climate_ack=False, animal_offer='boeuf', beef_source='regional', meat_source=None, original_second=None, reviewed=False, day1=None, day2=None, phase=1, event=None, started=time.time(), hint=False, first=None, second=None, service=None, self_service='tout', measure=False, grams_done=False, production=None, harvest_done=False, supply_done=False, supply_strategy=None, approvals={'supplier': False, 'students': False})
 
 def reset_supply(s):
     ready = bool(s['first'] and s['second']) and (s['phase'] == 1 or s['reviewed'])
@@ -116,6 +116,12 @@ def apply(s, role, action, **values):
             if s['phase'] != 3:
                 raise ValueError('La pause apparaît après le premier repas.')
             s['climate_ack'] = True
+        elif action == 'show_final_card':
+            if s['phase'] == 4:
+                apply(s, 'master', 'next')
+            if s['phase'] != 5:
+                raise ValueError('Cette carte se partage après le deuxième repas.')
+            s['final_card_visible'] = True
         elif action == 'debate_close':
             if s['phase'] != 5 or len(s.get('debate_votes', {})) != 3 or values.get('value') not in ('A', 'B', 'C', 'D', 'E'):
                 raise ValueError('Les trois équipes doivent proposer leur choix avant la décision collective.')
