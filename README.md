@@ -49,3 +49,23 @@ Un Dockerfile permet aussi de lancer le serveur sur un hébergeur compatible Nod
 - Aucun hébergement public n'a encore été configuré. GitHub Pages seul ne permet pas les sessions synchronisées.
 
 Les données réglementaires et nutritionnelles restent à documenter avant leur ajout au jeu.
+
+## Hébergement gratuit avec Streamlit Community Cloud
+
+Une version Python du jeu est disponible dans `app.py`. Elle partage les parties entre les écrans avec un cache serveur global protégé par verrou et actualise les vues toutes les deux secondes.
+
+Dans Streamlit Community Cloud, créer une application avec :
+
+- Dépôt : `ThierryArmant/Escape-Game-A.B.C.`
+- Branche : `main`
+- Fichier principal : `app.py`
+- Python : 3.12
+- Aucun secret nécessaire pour cette première version.
+
+Localement : `pip install -r requirements.txt` puis `streamlit run app.py`.
+
+Une seule application hébergée suffit pour le maître et les trois équipes. Tous ouvrent la même URL puis rejoignent le même code de partie. Le code est un accès de classe de confiance, pas une authentification personnelle. Ne saisissez pas de données nominatives.
+
+Les parties sont conservées en mémoire : un redémarrage, une mise en veille ou une mise à jour du serveur peut les effacer. Quitter puis rejoindre est possible tant que le serveur conserve la partie ; le rôle maître est conservé seulement dans sa session navigateur. La fluidité doit être vérifiée avec les quatre appareils après publication. Cette version ne nécessite aucun appel payant à une IA.
+
+Tests du moteur Python : `python -m unittest discover -s tests -p 'test_*.py'`.
