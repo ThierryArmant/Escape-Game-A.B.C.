@@ -295,26 +295,48 @@ def students_panel(s):
         st.success('Votre organisation est enregistrée. Le chef cuisinier calcule maintenant les restes.')
         st.write('Plat : ' + SERVICE_LABELS[s['service']])
         st.write('Libre-service : ' + SELF_SERVICE[s['self_service']][0])
+        service_time(s)
         with st.expander('Changer notre organisation'):
             service_picker()
     else:
         service_picker()
 
+# Temps fictifs par convive, non mesurés sur la cantine réelle.
+PLAT_MINUTES = {'unique': 6, 'adapte': 8, 'explique': 10}
+LIBRE_MINUTES = {'tout': 3, 'faim': 2, 'gouter': 4}
+
+def service_time(s):
+    if not s['service']:
+        return
+    duration = PLAT_MINUTES[s['service']] + LIBRE_MINUTES[s['self_service']]
+    st.info(f'Votre pause : 30 minutes. Passage au self estimé : {duration} minutes. Temps restant à table : {30 - duration} minutes.')
+    st.caption('Durées fictives par convive, attente et choix compris. Elles ne représentent pas la durée du service des 600 élèves.')
+
 def service_picker():
-    st.subheader('À la cantine : chacun n’a pas la même faim')
-    st.write('Aujourd’hui, certains élèves ont une petite faim, d’autres une grande faim. Le plat est servi à l’assiette par un agent ; les entrées et desserts sont en libre-service.')
+    st.subheader('À la cantine : 30 minutes pour passer au self et manger')
+    st.write('Certains élèves ont une petite faim, d’autres une grande faim. Le plat est servi à l’assiette par un agent ; les entrées et desserts sont en libre-service. Vous devez aussi garder du temps pour manger tranquillement.')
     st.table([
-        {'Service du plat': SERVICE_LABELS['unique'], 'Ce qui se passe': 'L’agent met la même quantité dans chaque assiette.', 'Pourquoi le choisir ?': 'Simple à organiser, mais la portion peut être trop grande ou trop petite.'},
-        {'Service du plat': SERVICE_LABELS['adapte'], 'Ce qui se passe': 'Vous annoncez petite ou grande faim. Un complément est possible.', 'Pourquoi le choisir ?': 'Adapter la portion à sa faim ; organiser le complément pour ceux qui en ont besoin.'},
-        {'Service du plat': SERVICE_LABELS['explique'], 'Ce qui se passe': 'L’agent présente le plat, propose de goûter, puis sert selon votre faim.', 'Pourquoi le choisir ?': 'Découvrir un plat sans remplir son assiette d’emblée ; cela demande du temps et un accompagnement.'},
+        {'Service du plat': SERVICE_LABELS['unique'], 'Ce qui se passe': 'L’agent sert la même quantité à chacun.', 'Avantage et contrainte': 'Passage simple, mais quantité parfois trop grande ou trop petite.', 'Temps estimé': '6 min'},
+        {'Service du plat': SERVICE_LABELS['adapte'], 'Ce qui se passe': 'Vous annoncez petite ou grande faim ; un complément reste possible.', 'Avantage et contrainte': 'Quantité adaptée, mais échange et complément à organiser.', 'Temps estimé': '8 min'},
+        {'Service du plat': SERVICE_LABELS['explique'], 'Ce qui se passe': 'Le plat est présenté ; vous pouvez goûter puis demander une portion adaptée.', 'Avantage et contrainte': 'Découvrir le plat, mais présentation et dégustation prennent du temps.', 'Temps estimé': '10 min'},
     ])
-    st.write('**Entrées et desserts :** prendre systématiquement les deux est simple, mais vous pouvez avoir trop sur le plateau. Choisir selon votre faim permet de prendre ce que vous pensez manger. Goûter une petite quantité aide lorsque le plat est inconnu, si cette possibilité est organisée par la cantine.')
-    with st.form('service'):
-        choice = st.radio('Comment servir le plat à l’assiette ?', list(SERVICE_LABELS), format_func=SERVICE_LABELS.get)
-        free = st.radio('Que faites-vous aux entrées et desserts en libre-service ?', list(SELF_SERVICE), format_func=lambda k: SELF_SERVICE[k][0])
-        st.caption('Petite faim : vous pouvez demander moins. Grande faim : une quantité suffisante et un complément doivent rester possibles.')
-        if st.form_submit_button('Enregistrer nos choix de cantine', type='primary'):
-            act('service', value=choice, self_service=free)
+    st.write('**Entrées et desserts en libre-service :** choisir selon votre faim aide à prendre ce que vous pensez manger. Goûter demande une organisation prévue par la cantine.')
+    st.table([
+        {'Choix au libre-service': SELF_SERVICE['tout'][0], 'Temps estimé': '3 min'},
+        {'Choix au libre-service': SELF_SERVICE['faim'][0], 'Temps estimé': '2 min'},
+        {'Choix au libre-service': SELF_SERVICE['gouter'][0], 'Temps estimé': '4 min'},
+    ])
+    st.caption('Ces durées sont des hypothèses fictives par convive, attente et choix compris. Elles servent à comparer les organisations du jeu.')
+    choice = st.radio('Comment servir le plat à l’assiette ?', list(SERVICE_LABELS), format_func=SERVICE_LABELS.get, key='pick_plat')
+    free = st.radio('Que faites-vous aux entrées et desserts en libre-service ?', list(SELF_SERVICE), format_func=lambda k: SELF_SERVICE[k][0], key='pick_libre')
+    duration = PLAT_MINUTES[choice] + LIBRE_MINUTES[free]
+    st.subheader('Le temps pour votre choix')
+    st.write(f'**{PLAT_MINUTES[choice]} min** pour le plat + **{LIBRE_MINUTES[free]} min** au libre-service = **{duration} min** de passage estimé.')
+    st.success(f'Sur vos 30 minutes, il reste **{30 - duration} minutes pour manger à table**.')
+    st.caption('Le temps restant ne détermine pas automatiquement le gaspillage. Les portions et les choix alimentaires ont leurs propres effets fictifs dans le jeu.')
+    st.write('Choisissez un service qui permet de manger à sa faim, de limiter les restes et de garder du temps à table.')
+    if st.button('Enregistrer nos choix de cantine', type='primary'):
+        act('service', value=choice, self_service=free)
 
 @st.fragment(run_every='2s')
 def game():
@@ -383,6 +405,7 @@ def game():
         if s['service']:
             st.write('Plat : ' + SERVICE_LABELS[s['service']])
             st.write('Entrées et desserts : ' + SELF_SERVICE[s['self_service']][0])
+            service_time(s)
     if s['hint']:
         st.info('Les aides individuelles sont disponibles à chaque calcul. Identifiez ce qui est demandé : une quantité totale, une quantité par élève ou un pourcentage.')
     st.caption('Prix, rendements et restes fictifs. Aucun mode de production ne garantit à lui seul un meilleur rendement. A.B.C. est simulé. Le gaspillage ne provoque pas directement l’aléa de cette partie.')
