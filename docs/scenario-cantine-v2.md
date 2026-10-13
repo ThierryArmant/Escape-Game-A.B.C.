@@ -1,3 +1,5 @@
+> Version antérieure. Voir [le parcours v3](scenario-cantine-v3.md), sans calcul à saisir.
+
 # Escape Game A.B.C. — parcours cantine, version 2
 
 Le parcours actuel est `app.py` sur Streamlit. Tous les prix, rendements, quantités de restes et effets des aléas sont fictifs. Collège de 800 élèves, 600 repas par service, 30 minutes, trois équipes composées d'élèves et un maître du jeu.

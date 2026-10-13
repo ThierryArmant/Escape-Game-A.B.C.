@@ -83,3 +83,17 @@ La version Streamlit `app.py` est le parcours actuel. La première version Node 
 - Un changement de commande demande une nouvelle vérification de récolte et de nouveaux accords. Un changement de service annule les mesures précédentes.
 
 La mise à jour du serveur peut effacer une partie en cours : créer une nouvelle partie pour tester cette version.
+
+## Version actuelle : décisions et réactions sur deux journées
+
+[Scénario v3](docs/scenario-cantine-v3.md) — il remplace les parcours v1 et v2.
+
+- Courtier en alimentation : choix des offres et préparation des deux livraisons.
+- Chef cuisinier : deux menus préparés à l’avance ; budget, variété et conséquences affichés.
+- Familles et élèves : choix de service à chaque journée, avec 30 minutes de pause.
+- Aucun calcul à saisir : les résultats se mettent à jour selon les décisions.
+- Les manches avancent automatiquement lorsque les accords sont obtenus et que le chef a pris connaissance du bilan.
+- Après le jour 1 : pause commune illustrée sur quatre écrans, reprise par le maître, sécheresse automatique et adaptation du jour 2.
+- Comparaison des deux journées en fin de partie.
+
+Les prix sont des hypothèses, pas des cotations réelles. Les cartes carbone donnent des repères qualitatifs, pas une empreinte mesurée par fournisseur.
