@@ -8,7 +8,7 @@ def load_cards(revision):
     import climate_cards
     return importlib.reload(climate_cards)
 
-cards = load_cards('abc-cartes-photos-chiffres-v4')
+cards = load_cards('abc-cartes-photos-chiffres-v5')
 climate_pause, menu_consequences, sourcing_card = cards.climate_pause, cards.menu_consequences, cards.sourcing_card
 
 @st.cache_resource
