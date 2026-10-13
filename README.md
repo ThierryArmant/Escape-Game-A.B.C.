@@ -7,7 +7,7 @@ Jeu pédagogique coopératif pour les collégiens : comprendre les arbitrages d'
 [Lire le scénario cantine, version 1](docs/scenario-cantine-v1.md)
 
 - Collège fictif de 800 élèves, 600 repas par service.
-- Trois équipes : familles et élèves, gestionnaires, producteurs et fournisseurs.
+- Trois équipes : familles et élèves, chef cuisinier, producteurs et fournisseurs.
 - Séance de 30 minutes, trois manches.
 - Sécheresse ou inondation déclenchée par le maître du jeu.
 - Budget, catalogue, énigmes, indices et bilan A.B.C.
@@ -69,3 +69,17 @@ Une seule application hébergée suffit pour le maître et les trois équipes. T
 Les parties sont conservées en mémoire : un redémarrage, une mise en veille ou une mise à jour du serveur peut les effacer. Quitter puis rejoindre est possible tant que le serveur conserve la partie ; le rôle maître est conservé seulement dans sa session navigateur. La fluidité doit être vérifiée avec les quatre appareils après publication. Cette version ne nécessite aucun appel payant à une IA.
 
 Tests du moteur Python : `python -m unittest discover -s tests -p 'test_*.py'`.
+
+## Parcours pédagogique actuel — version 2
+
+La version Streamlit `app.py` est le parcours actuel. La première version Node reste dans le dépôt comme prototype antérieur ; elle ne contient pas ces nouvelles missions.
+
+[Scénario et règles de la version 2](docs/scenario-cantine-v2.md)
+
+- Producteurs : choix de production bio ou conventionnelle, calcul de récolte, comparaison avec la commande, complément si nécessaire.
+- Familles et élèves : plat servi à l’assiette selon la faim, possibilité de goûter et choix d’entrées/desserts en libre-service.
+- Chef cuisinier : choix de menu, calculs du gaspillage un par un, coût estimé des restes et adaptation du prochain repas.
+- Aide progressive sans pénalité et calculatrice facultative. Les solutions complètes apparaissent seulement au troisième niveau d’aide.
+- Un changement de commande demande une nouvelle vérification de récolte et de nouveaux accords. Un changement de service annule les mesures précédentes.
+
+La mise à jour du serveur peut effacer une partie en cours : créer une nouvelle partie pour tester cette version.

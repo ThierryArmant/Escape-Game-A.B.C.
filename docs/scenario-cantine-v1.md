@@ -1,3 +1,5 @@
+> Version antérieure. Le parcours Streamlit actuel est décrit dans [la version 2](scenario-cantine-v2.md).
+
 # Escape Game A.B.C. — Scénario cantine, version 1
 
 ## Objectif collectif

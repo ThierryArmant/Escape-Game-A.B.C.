@@ -1,6 +1,6 @@
 import time
 import streamlit as st
-from abc_game import Store, MENUS, SERVICES, ROLES, cost
+from abc_game import Store, MENUS, SERVICES, ROLES, PRODUCTION, SERVICE_LABELS, SELF_SERVICE, cost, harvest, waste, stock_saving
 
 st.set_page_config(page_title='Escape Game A.B.C.', page_icon='🌱', layout='wide')
 
@@ -13,19 +13,19 @@ st.title('🌱 Escape Game A.B.C.')
 st.caption('600 repas · Trois équipes · Une réussite collective')
 
 if 'auth' not in st.session_state:
-    left, right = st.columns(2)
-    with left:
+    a, b = st.columns(2)
+    with a:
         st.subheader('Écran maître')
-        st.write('Créez une partie et communiquez le code aux trois équipes.')
+        st.write('Créez une partie, puis communiquez son code aux trois équipes.')
         if st.button('Créer une partie', type='primary'):
             try:
                 st.session_state.auth = store.create()
                 st.rerun()
             except ValueError as exc:
                 st.error(str(exc))
-    with right:
-        st.subheader('Rejoindre une équipe')
+    with b:
         with st.form('join'):
+            st.subheader('Rejoindre une équipe')
             code = st.text_input('Code de la partie', max_chars=6).strip().upper()
             role = st.selectbox('Équipe', ['students', 'manager', 'supplier'], format_func=ROLES.get)
             if st.form_submit_button('Rejoindre'):
@@ -34,7 +34,7 @@ if 'auth' not in st.session_state:
                     st.rerun()
                 except ValueError as exc:
                     st.error(str(exc))
-    st.caption('Données économiques fictives. Aucun nom d’élève demandé.')
+    st.caption('Données fictives. Aucun nom d’élève demandé.')
     st.stop()
 
 auth = st.session_state.auth
@@ -50,99 +50,248 @@ def act(action, **values):
         st.rerun()
     except ValueError as exc:
         st.session_state.abc_error = str(exc)
+        st.rerun()
 
-
-def mission_help(role, s):
+def mission(role, s):
     phase = s['phase']
     menu = s['first' if phase == 1 else 'second'] if phase in (1, 3) else None
-    pending = [ROLES[r] for r in ('supplier', 'students') if not s['approvals'][r]]
     if phase == 4:
-        return ('Préparer le bilan', 'Expliquez un choix, son effet sur le budget ou les restes, puis un geste à appliquer à la cantine.', 'Échangez oralement avec les autres équipes.')
+        return 'Votre bilan', 'Expliquez un choix de votre équipe et proposez un geste pour votre vraie cantine.'
     if role == 'master':
         if phase in (1, 3):
+            if not s['production']:
+                return 'Les producteurs commencent', 'Ils choisissent bio ou conventionnel. Le chef cuisinier pourra ensuite proposer le menu.'
             if not menu:
-                return ('Attendre les gestionnaires', 'L’équipe Gestionnaires doit choisir un menu puis cliquer sur « Proposer ce menu ».', 'Les autres équipes recevront automatiquement leur consigne dès que la proposition sera enregistrée.')
-            if pending:
-                return ('Des accords sont attendus', 'Le menu est proposé. Équipes qui doivent encore agir : ' + ', '.join(pending) + '.', 'Elles reçoivent leur consigne sur leur écran. Attendez leurs validations.')
-            return ('Tout le monde a validé', 'Le menu et les deux accords sont enregistrés.', 'Cliquez sur « Passer à la manche suivante ».')
-        if not s['service']:
-            return ('Attendre le service', 'L’équipe Familles et élèves doit choisir l’organisation des portions.', 'Les gestionnaires seront ensuite invités à calculer le gaspillage.')
-        if not s['measure']:
-            return ('Attendre les calculs', 'Le service est choisi. Les gestionnaires doivent calculer les grammes par convive et le pourcentage jeté.', 'La calculatrice et les formules sont disponibles sur leur écran.')
-        return ('La mesure est réussie', 'Les gestionnaires ont trouvé les deux résultats.', 'Cliquez sur « Passer à la manche suivante ».')
+                return 'Attendre la commande', 'Le chef cuisinier choisit le menu. Les autres équipes reçoivent leur mission dès qu’il est proposé.'
+            pending = [ROLES[r] for r in ('supplier', 'students') if not s['approvals'][r]]
+            return ('Missions encore en cours', 'Attendez : ' + ', '.join(pending) + '.') if pending else ('Prêts pour la suite', 'Les trois équipes ont terminé. Cliquez sur « Passer à la manche suivante ».')
+        return ('Mesure terminée', 'Cliquez sur « Passer à la manche suivante ».') if s['measure'] else ('Les élèves choisissent, le chef cuisinier mesure', 'Attendez le service choisi et les deux calculs. Les aides sont disponibles sur les écrans des équipes.')
     if phase in (1, 3):
-        if role == 'manager':
-            if menu:
-                remaining = 3000 - sum(s[k]['cost'] for k in ('first', 'second') if s[k])
-                detail = f'Votre menu est enregistré : {MENUS[menu["id"]][0]}, {menu["cost"]} €. Le budget restant sur les deux repas est de {remaining} €. Cette somme est réservée aux achats du jeu.'
-                return ('Menu proposé : attendez les accords', detail, 'Encore attendus : ' + ', '.join(pending) + '. Vous pouvez discuter avec ces équipes.' if pending else 'Les deux équipes ont validé. Attendez que le maître passe à la manche suivante.')
-            detail = 'Comparez les menus et leurs prix. Choisissez dans la liste « Menu », puis cliquez sur « Proposer ce menu ».'
-            if phase == 3 and s['event']:
-                detail = 'Lisez l’alerte, comparez les produits encore disponibles et les nouveaux prix. Choisissez un remplacement dans « Menu », puis cliquez sur « Proposer ce menu ».'
-            return ('Choisir un repas pour 600 convives', detail, 'Utilisez la calculatrice si nécessaire. Premier repas : 1 500 € maximum. Les deux repas ensemble : 3 000 € maximum.')
-        if not menu:
-            return ('Préparer votre avis', 'Attendez la proposition des gestionnaires, visible dans « Décisions partagées ».', 'Fournisseurs : préparez stocks et alternatives. Familles et élèves : discutez des préférences et adaptations acceptables.')
-        label = f'{MENUS[menu["id"]][0]} · {menu["cost"]} €'
-        if s['approvals'][role]:
-            return ('Votre accord est enregistré', 'Vous avez validé : ' + label + '.', 'Attendez les autres équipes et le maître. Une modification du menu demandera un nouvel accord.')
         if role == 'supplier':
-            return ('Un menu vous est proposé', label + '. Vérifiez les stocks, les délais et l’alerte éventuelle avec les gestionnaires.', 'Si le menu est réalisable, cliquez sur « Confirmer le menu et sa disponibilité ». Sinon, demandez oralement un autre menu avant de confirmer.')
-        return ('Donner l’avis des convives', label + '. Discutez : ce repas est-il acceptable ? Comment donner envie de le goûter ?', 'Après cet échange, cliquez sur « Valider le menu proposé ». Si vous souhaitez un changement, demandez-le aux gestionnaires avant de valider.')
+            if not s['production']:
+                return 'Choisir comment vous produisez', 'Comparez les prix et les coûts fictifs, puis choisissez bio ou conventionnel. Ce choix fixera les prix pour la cantine.'
+            if not menu:
+                return 'Votre offre est prête', 'Le chef cuisinier choisit un menu à partir de vos prix. Attendez leur commande.'
+            if s['approvals']['supplier']:
+                return 'Livraison confirmée', 'Votre vérification est terminée. Attendez la validation des élèves et la suite donnée par le maître.'
+            if not s['harvest_done']:
+                return 'Combien pouvez-vous fournir ?', 'Calculez les kilogrammes disponibles : nombre de parcelles ou caisses × kilogrammes de chacune. Une question à la fois, avec aide et calculatrice.'
+            if not s['supply_done']:
+                return 'Comparer avec la commande', 'Votre récolte est calculée. Comparez-la à la quantité demandée : en avez-vous assez ?'
+            if not s['supply_strategy']:
+                return 'Compléter la quantité manquante', 'Votre récolte est insuffisante. Choisissez le complément disponible pour livrer le repas entier. Son surcoût est inclus dans le prix du menu.'
+            return 'Votre commande est réalisable', 'Cliquez sur « Confirmer la livraison ». Le chef cuisinier et les élèves verront votre accord.'
+        if role == 'manager':
+            if not s['production']:
+                return 'Attendre les prix du producteur', 'Le producteur choisit d’abord son mode de production. Votre liste de menus apparaîtra ensuite.'
+            if not menu:
+                return 'Choisir le menu', 'Comparez les prix et le budget restant. Choisissez un menu pour 600 convives puis cliquez sur « Proposer ce menu ».'
+            pending = [ROLES[r] for r in ('supplier', 'students') if not s['approvals'][r]]
+            return ('Menu enregistré', 'Votre budget est calculé. Attendez : ' + ', '.join(pending) + '.') if pending else ('Commande validée', 'Tous ont donné leur accord. Le maître peut passer à la suite.')
+        if not menu:
+            return 'Attendre le menu', 'Le chef cuisinier va proposer un repas. Il apparaîtra ici ; vous pourrez alors donner votre avis.'
+        return ('Votre avis est enregistré', 'Attendez la fin de la mission du producteur et la suite donnée par le maître.') if s['approvals']['students'] else ('Donner l’avis des convives', 'Lisez le menu, imaginez votre plateau et échangez dans votre équipe. Validez le repas proposé, ou demandez un changement au chef cuisinier avant de valider.')
     if role == 'students':
-        if s['service']:
-            return ('Service enregistré', SERVICES[s['service']][0] + '. Les restes simulés sont maintenant visibles.', 'Les gestionnaires doivent effectuer les deux calculs. Attendez leur résultat. Changer de service annulera leur mesure précédente.')
-        return ('Choisir les portions', 'Comparez les trois organisations : portion unique, petite portion avec complément, ou portion adaptée et recette présentée.', 'Choisissez dans « Organisation du service » puis cliquez sur « Choisir le service ». Les petits appétits doivent pouvoir prendre moins, et les autres se resservir.')
+        return ('Vos choix de cantine sont enregistrés', 'Les restes simulés sont affichés. Le chef cuisinier va compter ce qui est jeté et son coût. Attendez ses calculs.') if s['service'] else ('Comme à la cantine', 'Choisissez comment demander votre plat selon votre faim, puis comment prendre entrée et dessert en libre-service. Lisez les explications avant de choisir.')
     if role == 'manager':
-        if s['measure']:
-            return ('Mesure réussie', 'Les deux calculs sont corrects. Expliquez aux autres équipes ce que représente cette quantité jetée.', 'La valeur des restes est une dépense déjà engagée : elle ne revient pas dans le budget. Attendez la manche suivante.')
         if not s['service']:
-            return ('Attendre le choix des portions', 'L’équipe Familles et élèves doit d’abord choisir le service.', 'Dès que les kilogrammes de restes apparaissent, vous recevrez la consigne de calcul.')
-        waste = SERVICES[s['service']][1]
-        return ('Calculer les restes du repas', f'Vous observez {waste} kg de restes pour 600 convives, sur 300 kg servis. Calculez les grammes par convive et le pourcentage jeté.', 'Ouvrez la calculatrice ci-dessous. Formules : kg × 1 000 ÷ 600 ; kg ÷ 300 × 100. Reportez vos résultats dans les deux champs, puis cliquez sur « Vérifier la mesure A.B.C. ».')
-    return ('Préparer une alternative', 'Pendant la mesure, discutez d’un produit ou d’une recette de remplacement et des difficultés du producteur.', 'Pas de bouton à valider à cette manche. Votre mission est un échange oral ; vous interviendrez à nouveau au prochain repas.')
+            return 'Attendre les choix des convives', 'Les élèves choisissent leurs portions et le libre-service. Vous mesurerez ensuite les restes.'
+        if s['measure']:
+            return 'Vos mesures sont terminées', 'Regardez ce que représente la nourriture jetée en euros. Cette dépense ne revient pas dans le budget. Préparez une amélioration pour le prochain repas.'
+        return ('Question 2 : la part jetée', 'Vous avez trouvé les grammes par élève. Calculez maintenant le pourcentage du repas jeté. La calculatrice et l’aide restent disponibles.') if s['grams_done'] else ('Question 1 : les restes par élève', 'Convertissez les kilogrammes en grammes, puis partagez entre 600 élèves. La question suivante apparaîtra après votre réussite.')
+    return 'Préparer le prochain repas', 'Votre récolte a été vérifiée. Regardez les choix des convives et la mesure du gaspillage ; vous recalculerez votre offre à la manche suivante.'
 
-def calculator(prefix, role, s):
-    if s['phase'] == 4:
-        return
-    with st.expander('🧮 Calculatrice — budget et quantités', expanded=role == 'manager' and s['phase'] == 2 and bool(s['service']) and not s['measure']):
-        if s['phase'] == 2 and s['service']:
-            waste = SERVICES[s['service']][1]
-            if st.checkbox('M’aider pas à pas avec les nombres du jeu', key=prefix + '_guided'):
-                st.write(f'1. Convertir les kilogrammes en grammes : {waste} × 1 000 = {waste * 1000} g.')
-                st.write(f'2. Partager entre 600 convives : {waste * 1000} ÷ 600 = {waste * 1000 / 600:g} g par convive.')
-                st.write(f'3. Calculer la part jetée : {waste} ÷ 300 × 100 = {waste / 3:g} %.')
-                if role == 'manager' and not s['measure']:
-                    if st.button('Reporter ces résultats dans mes réponses', key=prefix + '_copy'):
-                        st.session_state.answer_grams = waste * 1000 / 600
-                        st.session_state.answer_percent = waste / 3
-                        st.session_state.mission_pending = False
-                        st.rerun()
-                st.caption('Expliquez avec vos mots ce que signifie chacun des deux résultats.')
-        if s['phase'] == 2:
-            st.caption('Grammes par convive : kg de restes × 1 000 ÷ 600. Pourcentage : kg de restes ÷ 300 × 100. Effectuez vos opérations puis reportez les résultats dans les champs de réponse.')
-        else:
-            st.caption('Budget restant : 3 000 − coût du premier repas − coût du prochain repas. Prix par convive : coût du repas ÷ 600.')
-        x = st.number_input('Premier nombre', value=0.0, key=prefix + '_x', format='%.3f')
-        op = st.selectbox('Opération', ['+', '−', '×', '÷'], key=prefix + '_op')
-        y = st.number_input('Deuxième nombre', value=0.0, key=prefix + '_y', format='%.3f')
-        if op == '÷' and y == 0:
-            st.caption('Saisissez un diviseur différent de zéro.')
-        else:
-            result = x + y if op == '+' else x - y if op == '−' else x * y if op == '×' else x / y
-            st.success(f'{x:g} {op} {y:g} = {result:g}')
-            st.caption('Pour enchaîner un calcul, recopiez le résultat dans « Premier nombre ». La calculatrice ne valide pas vos réponses à votre place.')
-
-@st.dialog('Votre mission')
+@st.dialog('Votre prochaine action')
 def show_mission(role, s):
-    title, instruction, next_step = mission_help(role, s)
+    title, text = mission(role, s)
     st.caption(ROLES[role])
     st.subheader(title)
-    st.write(instruction)
-    st.info(next_step)
-    calculator('dialog_calc', role, s)
+    st.write(text)
+    st.caption('Les outils et les boutons utiles vous attendent sur votre page.')
     if st.button('J’ai compris', type='primary'):
         st.rerun()
 
+def calculator(key):
+    with st.expander('🧮 Ouvrir la calculatrice', expanded=False):
+        st.caption('Saisissez les deux nombres de votre opération. Vous pouvez recopier le résultat pour faire la suivante.')
+        x = st.number_input('Premier nombre', value=0.0, key=key + '_x')
+        op = st.selectbox('Opération', ['×', '÷', '+', '−'], key=key + '_op')
+        y = st.number_input('Deuxième nombre', value=0.0, key=key + '_y')
+        if op == '÷' and y == 0:
+            st.caption('Le diviseur doit être différent de zéro.')
+        else:
+            r = x * y if op == '×' else x / y if op == '÷' else x + y if op == '+' else x - y
+            st.success(f'{x:g} {op} {y:g} = {r:g}')
+
+def math_question(key, title, data, answer, unit, action, hints):
+    # Chaque question a son propre niveau d’aide. Aucune réponse n’est révélée au départ.
+    key = auth['code'] + '_' + key
+    st.subheader(title)
+    st.write(data)
+    level_key = key + '_help'
+    level = st.session_state.get(level_key, 0)
+    if st.button('J’ai besoin d’aide' if level == 0 else 'Un peu plus d’aide', key=key + '_help_button', disabled=level >= 3):
+        st.session_state[level_key] = min(3, level + 1)
+        st.rerun()
+    if level:
+        st.info(hints[min(level, 2) - 1])
+    if level >= 3:
+        st.success(f'Nous le faisons ensemble : {answer:g} {unit}. Recopiez ce résultat puis vérifiez pour continuer.')
+    calculator(key + '_calc')
+    with st.form(key + '_form'):
+        value = st.number_input('Votre réponse (' + unit + ')', min_value=0.0, step=1.0, key=key + '_answer')
+        if st.form_submit_button('Vérifier et continuer', type='primary'):
+            act(action, answer=value)
+    st.caption('Vous pouvez réessayer autant de fois que nécessaire, sans pénalité.')
+
+def supplier_panel(s):
+    phase = s['phase']
+    if phase == 2:
+        st.write('Votre mission de livraison est terminée. Préparez votre offre pour le prochain repas en observant les restes. Aucun calcul supplémentaire à cette manche.')
+        return
+    if phase not in (1, 3):
+        return
+    if not s['production']:
+        st.subheader('1 · Votre mode de production')
+        st.write('Dans ce scénario, le bio coûte davantage à produire et se vend plus cher. Les rendements de départ sont identiques : cela ne signifie pas que tous les rendements réels sont identiques.')
+        st.table([{'Mode': v['name'], 'Coût pommes de terre €/kg': v['potato_cost'], 'Vente pommes de terre €/kg': v['potato_price'], 'Coût carottes €/kg': v['carrot_cost'], 'Vente carottes €/kg': v['carrot_price']} for v in PRODUCTION.values()])
+        with st.form('production'):
+            mode = st.radio('Votre choix', list(PRODUCTION), format_func=lambda k: PRODUCTION[k]['name'])
+            if st.form_submit_button('Publier mes prix', type='primary'):
+                act('production', value=mode)
+        return
+    st.caption('Production choisie : ' + PRODUCTION[s['production']]['name'])
+    menu = s['first' if phase == 1 else 'second']
+    if not menu:
+        st.info('Votre offre est envoyée. Le calcul de récolte apparaîtra dès que le chef cuisinier auront commandé.')
+        return
+    h = harvest(s)
+    if s['event'] == 'inondation' and phase == 3:
+        st.warning('Vos 120 kg de pommes de terre et 90 kg de carottes sont perdus dans les parcelles touchées. Les frais de culture étaient déjà engagés. Pour cette livraison, vous mobilisez un stock de réserve non touché.')
+    if not s['harvest_done']:
+        math_question(f'harvest_{phase}_{menu["id"]}_{s["event"]}', '2 · Calculer la quantité disponible', f'{h["name"]} : vous avez {h["plots"]} {h["unit"]}. Chacune fournit {h["yield"]} kg. Combien de kilogrammes sont disponibles en tout ?', h['quantity'], 'kg', 'harvest', [f'Multipliez les {h["plots"]} {h["unit"]} par les {h["yield"]} kg de chacune.', f'L’opération est : {h["plots"]} × {h["yield"]}. Utilisez la calculatrice si besoin.'])
+        return
+    st.success(f'Quantité disponible vérifiée : {h["quantity"]} kg de {h["name"].lower()}.')
+    if not s['supply_done']:
+        st.subheader('3 · Avez-vous assez pour la cantine ?')
+        st.write(f'Votre stock : **{h["quantity"]} kg**. Commande : **{h["need"]} kg**.')
+        with st.form('supply'):
+            choice = st.radio('Pouvez-vous fournir toute la quantité avec ce stock ?', ['oui', 'non'], format_func=lambda k: 'Oui, j’ai assez' if k == 'oui' else 'Non, il manque une quantité')
+            if st.form_submit_button('Vérifier ma comparaison', type='primary'):
+                act('supply', value=choice)
+        with st.expander('Besoin d’aide pour comparer ?'):
+            st.write('Si le stock est égal ou supérieur à la commande, vous avez assez. Sinon, la quantité manquante est : commande − stock.')
+        return
+    if not s['supply_strategy']:
+        missing = h['need'] - h['quantity']
+        st.warning(f'Il manque {missing} kg. Votre calcul a permis de repérer le problème !')
+        st.write('Un complément est disponible : légumes surgelés pour les carottes, fournisseur partenaire pour les pommes de terre. Le menu affiché comprend déjà ce remplacement et sa hausse de prix.')
+        if st.button(f'Organiser le complément de {missing} kg', type='primary'):
+            act('strategy', value='complement')
+        return
+    st.success('La commande peut être livrée avec le stock vérifié et, si nécessaire, le complément prévu.')
+    if not s['approvals']['supplier']:
+        if st.button('Confirmer la livraison', type='primary'):
+            act('approve')
+
+def manager_panel(s):
+    phase = s['phase']
+    if phase in (1, 3):
+        if not s['production']:
+            st.info('Attendez les prix du producteur.')
+            return
+        menu = s['first' if phase == 1 else 'second']
+        if menu:
+            st.success(f'Menu proposé : {MENUS[menu["id"]][0]} · {menu["cost"]} €.')
+            if phase == 3 and menu.get('reuse'):
+                st.write(f'Le stock utilisable réduit les nouveaux achats de {stock_saving(menu["id"], s["event"], s["production"]):g} €.')
+            if menu.get('adaptation'):
+                st.write('Votre amélioration pour demain : ' + menu['adaptation'])
+            with st.expander('Modifier ma proposition'):
+                menu_picker(s)
+        else:
+            menu_picker(s)
+        return
+    if phase != 2 or not s['service']:
+        return
+    w = waste(s)
+    if not s['grams_done']:
+        math_question(f'grams_{s["service"]}_{s["self_service"]}', '1 · Combien est jeté par élève ?', f'Il reste **{w} kg** de nourriture comestible pour **600 convives**. Combien cela fait-il de **grammes par convive** ?', w * 1000 / 600, 'g par convive', 'grams', ['D’abord, convertissez les kilogrammes en grammes : 1 kg = 1 000 g. Ensuite, partagez entre 600 convives.', f'Première opération : {w} × 1 000. Deuxième opération : le résultat ÷ 600.'])
+    elif not s['measure']:
+        st.success(f'Première mesure réussie : {w * 1000 / 600:g} g par convive.')
+        math_question(f'percent_{s["service"]}_{s["self_service"]}', '2 · Quelle part du repas a été jetée ?', f'**{w} kg** jetés sur **300 kg** servis. Quel est le **pourcentage jeté** ?', w / 3, '%', 'percent', ['Pour obtenir un pourcentage, divisez la quantité jetée par la quantité servie, puis multipliez par 100.', f'Les opérations sont : {w} ÷ 300, puis le résultat × 100.'])
+    else:
+        st.success(f'Bravo : {w * 1000 / 600:g} g par convive et {w / 3:g} % du repas jeté.')
+        value = round(s['first']['cost'] * w / 300)
+        st.metric('Valeur estimée de la nourriture jetée', f'{value} €')
+        st.write('Cette nourriture a été achetée mais personne ne l’a mangée. Cette dépense ne revient pas dans votre budget. Vous pourrez améliorer le prochain service avec les élèves et les producteurs.')
+
+def menu_picker(s):
+    phase = s['phase']
+    event = s['event'] if phase == 3 else None
+    options = list(MENUS) if phase == 3 else [m for m in MENUS if m != 'secours']
+    if event == 'inondation':
+        options = ['secours']
+    spent = s['first']['cost'] if phase == 3 else 0
+    if phase == 3:
+        st.subheader('Le chef adapte le repas du lendemain')
+        st.write(f'Hier : {waste(s)} kg de restes comestibles, soit {waste(s) * 1000 / 600:g} g par élève. Utilisez cette observation pour adapter le service, présenter le plat et éviter de trop acheter.')
+        st.info('Stock fictif utilisable de la veille : 12 kg de pommes de terre crues et 9 kg de carottes crues, non servies et conservées dans des conditions adaptées. Ce stock était déjà acheté avant les deux repas du jeu. Il est distinct des déchets des plateaux, qui ne sont pas remis en cuisine.')
+    st.subheader('Comparer les repas pour 600 convives')
+    st.caption('Base fixe de 540 € incluse. Les prix tiennent compte du choix du producteur et des aléas.')
+    st.table([{'Menu': MENUS[m][0], 'Prix (€)': cost(m, event, s['production']), 'Budget restant sur deux repas (€)': 3000 - spent - cost(m, event, s['production'])} for m in options])
+    calculator('budget_' + str(phase))
+    with st.form('menu_' + str(phase)):
+        choice = st.selectbox('Menu', options, format_func=lambda k: MENUS[k][0])
+        reuse = st.checkbox('Utiliser le stock de légumes crus de la veille dans ce menu') if phase == 3 and event != 'inondation' else False
+        if phase == 3:
+            st.caption('Menu régional : 12 kg de pommes de terre déjà en stock, donc 108 kg à commander. Autres menus avec carottes : 9 kg déjà en stock, donc 81 kg à commander. La réduction de dépense sera affichée après votre proposition. Le menu de réserve utilise ses propres stocks.')
+            adaptation = st.radio('Pour mieux satisfaire les convives demain', ['Présenter le plat et proposer de goûter', 'Prévoir des portions selon la faim et un complément', 'Conserver le service prévu'])
+        if st.form_submit_button('Proposer ce menu', type='primary'):
+            act('menu', value=choice, reuse=reuse, adaptation=adaptation if phase == 3 else None)
+    st.caption('Après votre proposition : le producteur vérifie sa récolte ; les élèves donnent leur avis ; le maître lance la suite.')
+
+def students_panel(s):
+    phase = s['phase']
+    if phase in (1, 3):
+        menu = s['first' if phase == 1 else 'second']
+        if menu:
+            st.subheader('Votre prochain repas')
+            st.write(MENUS[menu['id']][0])
+            if menu.get('adaptation'):
+                st.info('Le chef propose pour demain : ' + menu['adaptation'])
+            if menu.get('reuse'):
+                st.caption('Le chef utilise aussi des légumes crus encore disponibles dans son stock de la veille.')
+            st.write('Imaginez votre plateau : connaissez-vous ce plat ? Aimeriez-vous goûter ? Une petite portion ou une plus grande vous conviendrait-elle ?')
+            if not s['approvals']['students'] and st.button('Valider ce repas pour les convives', type='primary'):
+                act('approve')
+        return
+    if phase != 2:
+        return
+    if s['service']:
+        st.success('Votre organisation est enregistrée. Le chef cuisinier calcule maintenant les restes.')
+        st.write('Plat : ' + SERVICE_LABELS[s['service']])
+        st.write('Libre-service : ' + SELF_SERVICE[s['self_service']][0])
+        with st.expander('Changer notre organisation'):
+            service_picker()
+    else:
+        service_picker()
+
+def service_picker():
+    st.subheader('À la cantine : chacun n’a pas la même faim')
+    st.write('Aujourd’hui, certains élèves ont une petite faim, d’autres une grande faim. Le plat est servi à l’assiette par un agent ; les entrées et desserts sont en libre-service.')
+    st.table([
+        {'Service du plat': SERVICE_LABELS['unique'], 'Ce qui se passe': 'L’agent met la même quantité dans chaque assiette.', 'Pourquoi le choisir ?': 'Simple à organiser, mais la portion peut être trop grande ou trop petite.'},
+        {'Service du plat': SERVICE_LABELS['adapte'], 'Ce qui se passe': 'Vous annoncez petite ou grande faim. Un complément est possible.', 'Pourquoi le choisir ?': 'Adapter la portion à sa faim ; organiser le complément pour ceux qui en ont besoin.'},
+        {'Service du plat': SERVICE_LABELS['explique'], 'Ce qui se passe': 'L’agent présente le plat, propose de goûter, puis sert selon votre faim.', 'Pourquoi le choisir ?': 'Découvrir un plat sans remplir son assiette d’emblée ; cela demande du temps et un accompagnement.'},
+    ])
+    st.write('**Entrées et desserts :** prendre systématiquement les deux est simple, mais vous pouvez avoir trop sur le plateau. Choisir selon votre faim permet de prendre ce que vous pensez manger. Goûter une petite quantité aide lorsque le plat est inconnu, si cette possibilité est organisée par la cantine.')
+    with st.form('service'):
+        choice = st.radio('Comment servir le plat à l’assiette ?', list(SERVICE_LABELS), format_func=SERVICE_LABELS.get)
+        free = st.radio('Que faites-vous aux entrées et desserts en libre-service ?', list(SELF_SERVICE), format_func=lambda k: SELF_SERVICE[k][0])
+        st.caption('Petite faim : vous pouvez demander moins. Grande faim : une quantité suffisante et un complément doivent rester possibles.')
+        if st.form_submit_button('Enregistrer nos choix de cantine', type='primary'):
+            act('service', value=choice, self_service=free)
 
 @st.fragment(run_every='2s')
 def game():
@@ -151,103 +300,69 @@ def game():
     except ValueError as exc:
         st.error(str(exc))
         return
+    # Une aide automatique à chaque véritable étape, jamais à chaque frappe dans la calculatrice.
     role, phase = auth['role'], s['phase']
-    current_menu = s['first' if phase == 1 else 'second'] if phase in (1, 3) else None
-    menu_signature = (current_menu['id'], current_menu['cost']) if current_menu else None
-    approvals_signature = tuple(s['approvals'][r] for r in ('supplier', 'students')) if role in ('master', 'manager') else s['approvals'].get(role)
-    help_context = (auth['code'], role, phase, s['event'], menu_signature, s['service'], s['measure'], approvals_signature if phase in (1, 3) else None)
-    if st.session_state.get('mission_context') != help_context:
-        st.session_state.mission_context = help_context
+    title, instruction = mission(role, s)
+    context = (auth['code'], role, phase, s['event'], title, str(s['first']), str(s['second']), s['service'], s['self_service'])
+    if st.session_state.get('mission_context') != context:
+        st.session_state.mission_context = context
         st.session_state.mission_pending = True
         st.rerun()
     if st.button('❓ Que doit faire mon équipe ?'):
         st.session_state.mission_pending = True
         st.rerun()
-    title, instruction, next_step = mission_help(role, s)
-    st.info(f'**À vous : {title}.** {instruction}')
-    st.caption(next_step)
-    calculator('screen_calc', role, s)
-    st.subheader(['', '1 · Acheter et composer', '2 · Servir et mesurer', '3 · Adapter ensemble', 'Bilan collectif'][phase])
-    remaining_time = max(0, 1800 - int(time.time() - s['started']))
-    st.caption(f'Temps indicatif : {remaining_time // 60} min {remaining_time % 60:02d} s')
-    waste = SERVICES[s['service']][1] if s['service'] else None
+    st.info(f'**{title}** — {instruction}')
+    st.subheader(['', '1 · Commander et vérifier la récolte', '2 · Choisir son service et mesurer les restes', '3 · Adapter le prochain repas', 'Bilan collectif'][phase])
+    seconds = max(0, 1800 - int(time.time() - s['started']))
+    st.caption(f'Temps indicatif : {seconds // 60} min {seconds % 60:02d} s')
     spent = sum(s[k]['cost'] for k in ('first', 'second') if s[k])
-    a, b, c = st.columns(3)
-    a.metric('Budget restant sur deux repas', f'{3000 - spent} €')
-    b.metric('Restes comestibles', '—' if waste is None else f'{waste} kg')
-    c.metric('Mesure A.B.C.', 'Résolue' if s['measure'] else 'À résoudre')
-    if s['event'] == 'inondation':
-        st.warning('INONDATION — Les récoltes de carottes et de pommes de terre du fournisseur touché sont détruites. Il perd les revenus attendus malgré les dépenses déjà engagées. Les stocks de remplacement deviennent plus chers : le menu de secours passe de 900 € à 1 080 € (+20 %, hypothèse fictive). Adaptez le prochain repas ensemble.')
-    elif s['event'] == 'secheresse':
-        st.warning('SÉCHERESSE — Seule la moitié des carottes est disponible. Le remplacement fait passer les légumes à 189 € au lieu de 180 €. Les pommes de terre passent de 144 € à 180 €. Ces hausses sont fictives.')
+    x, y, z = st.columns(3)
+    x.metric('Budget disponible sur deux repas', f'{3000 - spent} €')
+    y.metric('Restes comestibles simulés', '—' if waste(s) is None else f'{waste(s)} kg')
+    z.metric('Mesure A.B.C.', 'Terminée' if s['measure'] else 'À faire')
+    if s['event']:
+        text = 'INONDATION : les récoltes du fournisseur touché sont détruites. Ses frais étaient engagés et ses revenus attendus sont perdus. Les réserves de remplacement sont plus demandées : le menu de secours passe de 900 € à 1 080 €.' if s['event'] == 'inondation' else 'SÉCHERESSE : les rendements du prochain repas diminuent. Les producteurs recalculent leur récolte ; les compléments font monter les prix.'
+        st.warning(text + ' Les repas déjà servis ne changent pas. Hypothèses fictives du jeu.')
     if st.session_state.get('abc_error'):
-        st.error(st.session_state.abc_error)
-    if role == 'master':
-        st.write('Les équipes négocient oralement puis valident sur leur tablette. Vous décidez quand déclencher un seul aléa.')
-        if phase < 4:
-            if st.button('Passer à la manche suivante', type='primary'):
-                act('next')
-            if st.button('Afficher un indice'):
-                act('hint')
-            if not s['event']:
-                x, y = st.columns(2)
-                if x.button('Déclencher une sécheresse'):
-                    act('event', value='secheresse')
-                if y.button('Déclencher une inondation'):
-                    act('event', value='inondation')
-    elif phase in (1, 3):
-        if role == 'manager':
-            st.write('Proposez un menu pour 600 convives. Base fixe de 540 € incluse. Budget : 1 500 € au premier repas, 3 000 € sur les deux.')
-            options = list(MENUS) if phase == 3 else [m for m in MENUS if m != 'secours']
-            options = [m for m in options if not (phase == 3 and s['event'] == 'inondation' and m != 'secours')]
-            first_cost = s['first']['cost'] if s['first'] and phase == 3 else 0
-            st.write('Comparez avant de choisir : les calculs du budget sont faits pour vous.')
-            st.table([{'Menu': MENUS[m][0], 'Coût du repas (€)': cost(m, s['event'] if phase == 3 else None), 'Budget restant pour les deux repas (€)': 3000 - first_cost - cost(m, s['event'] if phase == 3 else None)} for m in options])
-            st.caption('Après votre proposition, les fournisseurs vérifient les disponibilités et les familles et élèves donnent leur accord. Vous n’avez pas à passer vous-mêmes à la manche suivante.')
-            with st.form(f'menu_{phase}_{s["event"]}'):
-                choice = st.selectbox('Menu', options, format_func=lambda m: f'{MENUS[m][0]} · {cost(m, s["event"] if phase == 3 else None)} €')
-                if st.form_submit_button('Proposer ce menu'):
-                    act('menu', value=choice)
-        elif role == 'supplier':
-            st.write('Mission : confirmez les quantités et les délais avant de promettre une livraison. Un lot de carottes et de poulet régional par service. Deux lots de légumes surgelés en réserve. Commande ordinaire à J−2 : produits régionaux à J+1, importés à J+2.')
-            st.write('Après un aléa, riz de réserve, lentilles et légumes surgelés non touchés permettent le menu de secours. Expliquez les conséquences sur votre travail et vos revenus.')
-            if st.button('Confirmer le menu et sa disponibilité'):
-                act('approve')
-        else:
-            st.write('180 convives préfèrent une petite portion avec un complément possible. Discutez de l’acceptabilité du menu et proposez une présentation qui donne envie de goûter.')
-            if st.button('Valider le menu proposé'):
-                act('approve')
-    elif phase == 2:
-        if role == 'students':
-            with st.form('service'):
-                choice = st.radio('Organisation du service', list(SERVICES), format_func=lambda k: SERVICES[k][0])
-                if st.form_submit_button('Choisir le service'):
-                    act('service', value=choice)
-        elif role == 'manager':
-            st.write('300 kg comestibles servis à 600 convives. Calculez les grammes de restes par convive et le pourcentage jeté.')
-            with st.form('measure'):
-                grams = st.number_input('Grammes par convive', min_value=0.0, step=1.0, key='answer_grams')
-                percent = st.number_input('Pourcentage jeté', min_value=0.0, max_value=100.0, step=1.0, key='answer_percent')
-                if st.form_submit_button('Vérifier la mesure A.B.C.'):
-                    act('measure', grams=grams, percent=percent)
-        else:
-            st.write('Préparez une alternative aux produits exposés à un aléa. Comment utiliser les mesures pour ajuster les achats sans priver les convives de nourriture ?')
+        st.warning(st.session_state.abc_error)
+    if role == 'master' and phase < 4:
+        ready = (bool(s['first' if phase == 1 else 'second']) and all(s['approvals'].values())) if phase in (1, 3) else s['measure']
+        if st.button('Passer à la manche suivante', disabled=not ready, type='primary'):
+            act('next')
+        if not ready:
+            st.caption('Le bouton se déverrouille quand les missions nécessaires sont terminées.')
+        if st.button('Afficher un indice commun'):
+            act('hint')
+        if not s['event']:
+            a, b = st.columns(2)
+            if a.button('Déclencher une sécheresse'):
+                act('event', value='secheresse')
+            if b.button('Déclencher une inondation'):
+                act('event', value='inondation')
+    elif role == 'manager':
+        manager_panel(s)
+    elif role == 'supplier':
+        supplier_panel(s)
+    elif role == 'students':
+        students_panel(s)
     if phase == 4:
-        st.success('Mission accomplie : deux services de 600 repas prévus dans le budget collectif.')
-        st.write('Quel geste appliquerez-vous à la cantine ? Qu’avez-vous appris d’une autre équipe ? Quel choix a rendu votre menu adaptable ?')
-    st.divider()
-    st.subheader('Décisions partagées')
-    for field, label in [('first', 'Premier repas'), ('second', 'Prochain repas')]:
-        menu = s[field]
-        st.write(f'{label} : ' + (f'{MENUS[menu["id"]][0]} · {menu["cost"]} €' if menu else 'En discussion'))
-    st.write('Service : ' + (SERVICES[s['service']][0] if s['service'] else 'À choisir'))
-    if phase in (1, 3):
-        st.write('Fournisseurs : ' + ('✓ confirmé' if s['approvals']['supplier'] else 'en attente') + ' · Élèves : ' + ('✓ validé' if s['approvals']['students'] else 'en attente'))
-    if s['measure']:
-        st.write(f'Valeur estimée des restes : {round(s["first"]["cost"] * waste / 300)} €. Dépense déjà engagée, pas d’argent récupéré.')
+        st.success('Les deux repas sont possibles dans le budget collectif. Chaque équipe a contribué !')
+        st.write('Quel choix a réduit les restes ? Quelle difficulté a rencontré le producteur ? Que changeriez-vous à votre vraie cantine ?')
+    with st.expander('Voir les décisions des trois équipes', expanded=role == 'master'):
+        st.write('Production : ' + (PRODUCTION[s['production']]['name'] if s['production'] else 'À choisir'))
+        for k, label in [('first', 'Premier repas'), ('second', 'Prochain repas')]:
+            m = s[k]
+            st.write(label + ' : ' + (f'{MENUS[m["id"]][0]} · {m["cost"]} €' if m else 'À proposer'))
+            if m and m.get('adaptation'):
+                st.write('Amélioration proposée par le chef : ' + m['adaptation'])
+        if phase in (1, 3):
+            st.write('Producteur : ' + ('✓ livraison confirmée' if s['approvals']['supplier'] else 'mission en cours') + ' · Élèves : ' + ('✓ avis validé' if s['approvals']['students'] else 'avis attendu'))
+        if s['service']:
+            st.write('Plat : ' + SERVICE_LABELS[s['service']])
+            st.write('Entrées et desserts : ' + SELF_SERVICE[s['self_service']][0])
     if s['hint']:
-        st.info('Grammes par convive = kg de restes × 1 000 ÷ 600. Pourcentage = kg de restes ÷ 300 × 100. Budget collectif = coût des deux menus.')
-    st.caption('Données fictives · Mesures A.B.C. simulées · Une catastrophe n’est pas une conséquence directe des plateaux jetés.')
+        st.info('Les aides individuelles sont disponibles à chaque calcul. Identifiez ce qui est demandé : une quantité totale, une quantité par élève ou un pourcentage.')
+    st.caption('Prix, rendements et restes fictifs. Aucun mode de production ne garantit à lui seul un meilleur rendement. A.B.C. est simulé. Le gaspillage ne provoque pas directement l’aléa de cette partie.')
 
 game()
 if st.session_state.pop('mission_pending', False):
