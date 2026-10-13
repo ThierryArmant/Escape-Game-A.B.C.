@@ -51,6 +51,50 @@ def act(action, **values):
     except ValueError as exc:
         st.session_state.abc_error = str(exc)
 
+
+def mission_help(role, s):
+    phase = s['phase']
+    if phase == 4:
+        return ('Préparer le bilan', 'Expliquez un choix, son effet sur le budget ou les restes, puis un geste à appliquer à la cantine.', 'Échangez oralement avec les autres équipes.')
+    if role == 'master':
+        if phase in (1, 3):
+            return ('Faire avancer les équipes', 'Les gestionnaires proposent le menu. Les fournisseurs confirment sa disponibilité et les élèves le valident.', 'Lorsque les deux accords sont affichés, cliquez sur « Passer à la manche suivante ». Vous pouvez déclencher un seul aléa quand vous le souhaitez.')
+        return ('Accompagner la mesure', 'Les élèves choisissent le service, puis les gestionnaires calculent les grammes par convive et le pourcentage jeté.', 'Attendez que la mesure A.B.C. affiche « Résolue », puis cliquez sur « Passer à la manche suivante ».')
+    if phase in (1, 3):
+        field = 'first' if phase == 1 else 'second'
+        if role == 'manager':
+            detail = 'Choisissez un menu pour 600 repas dans la liste « Menu », puis cliquez sur « Proposer ce menu ».'
+            if phase == 3 and s['event']:
+                detail = 'Lisez l’alerte : les disponibilités et les prix ont changé. Choisissez un menu de remplacement, puis cliquez sur « Proposer ce menu ».'
+            return ('Proposer le repas', detail, 'Discutez avec les deux autres équipes. Une nouvelle proposition annule les accords précédents.')
+        if not s[field]:
+            return ('Préparer votre avis', 'Attendez la proposition des gestionnaires, visible dans « Décisions partagées ».', 'Fournisseurs : préparez les stocks et alternatives. Élèves : préparez vos préférences et les adaptations acceptables.')
+        if s['approvals'][role]:
+            return ('Votre accord est enregistré', 'Votre équipe a validé la proposition actuelle.', 'Attendez les autres équipes et le maître. Si le menu change, vous devrez le valider à nouveau.')
+        if role == 'supplier':
+            return ('Confirmer la disponibilité', 'Lisez le menu dans « Décisions partagées ». Vérifiez les stocks, les délais et l’éventuelle alerte avec les gestionnaires.', 'Cliquez sur « Confirmer le menu et sa disponibilité ».')
+        return ('Valider le choix des convives', 'Lisez le menu dans « Décisions partagées ». Discutez des préférences des élèves et des adaptations possibles.', 'Cliquez sur « Valider le menu proposé ».')
+    if role == 'students':
+        return ('Choisir les portions', 'Dans « Organisation du service », choisissez une manière de servir, puis cliquez sur « Choisir le service ».', 'Les gestionnaires calculeront ensuite le gaspillage. Un changement de service annule le calcul précédent.')
+    if role == 'manager':
+        if s['measure']:
+            return ('Mesure réussie', 'Les deux calculs sont corrects.', 'Expliquez ce que les restes représentent et attendez la manche suivante.')
+        if not s['service']:
+            return ('Attendre le choix du service', 'Les élèves doivent d’abord choisir les portions.', 'Dès que les restes apparaissent, remplissez les deux champs et cliquez sur « Vérifier la mesure A.B.C. ».')
+        return ('Calculer le gaspillage', 'Avec les kilogrammes de restes affichés, calculez les grammes par convive pour 600 élèves et le pourcentage des 300 kg servis.', 'Remplissez les deux champs, puis cliquez sur « Vérifier la mesure A.B.C. ». Vous pouvez demander un indice au maître.')
+    return ('Préparer une alternative', 'Quels produits et quelles recettes permettraient d’adapter le prochain repas ?', 'Vous n’avez pas de bouton de validation à cette manche. Discutez avec les autres équipes et expliquez les contraintes du producteur.')
+
+@st.dialog('Votre mission')
+def show_mission(role, s):
+    title, instruction, next_step = mission_help(role, s)
+    st.caption(ROLES[role])
+    st.subheader(title)
+    st.write(instruction)
+    st.info(next_step)
+    if st.button('J’ai compris', type='primary'):
+        st.rerun()
+
+
 @st.fragment(run_every='2s')
 def game():
     try:
@@ -59,6 +103,16 @@ def game():
         st.error(str(exc))
         return
     role, phase = auth['role'], s['phase']
+    help_context = (auth['code'], role, phase, s['event'], bool(s['first'] if phase == 1 else s['second']) if phase in (1, 3) else bool(s['service']), s['measure'])
+    if st.session_state.get('mission_context') != help_context:
+        st.session_state.mission_context = help_context
+        st.session_state.mission_pending = True
+        st.rerun()
+    if st.button('❓ Que doit faire mon équipe ?'):
+        st.session_state.mission_pending = True
+        st.rerun()
+    title, instruction, _ = mission_help(role, s)
+    st.info(f'**À vous : {title}.** {instruction}')
     st.subheader(['', '1 · Acheter et composer', '2 · Servir et mesurer', '3 · Adapter ensemble', 'Bilan collectif'][phase])
     remaining_time = max(0, 1800 - int(time.time() - s['started']))
     st.caption(f'Temps indicatif : {remaining_time // 60} min {remaining_time % 60:02d} s')
@@ -138,3 +192,8 @@ def game():
     st.caption('Données fictives · Mesures A.B.C. simulées · Une catastrophe n’est pas une conséquence directe des plateaux jetés.')
 
 game()
+if st.session_state.pop('mission_pending', False):
+    try:
+        show_mission(auth['role'], store.read(auth))
+    except ValueError as exc:
+        st.error(str(exc))
