@@ -1,14 +1,25 @@
 import time
 import streamlit as st
-from abc_game import Store, MENUS, SERVICES, ROLES, PRODUCTION, SERVICE_LABELS, SELF_SERVICE, cost, harvest, waste, stock_saving
+import importlib
+
+@st.cache_resource
+def load_engine(revision):
+    # Streamlit peut relancer app.py sans recharger les modules importés.
+    import abc_game
+    return importlib.reload(abc_game)
+
+engine = load_engine('cantine-v2')
+Store, MENUS, SERVICES, ROLES = engine.Store, engine.MENUS, engine.SERVICES, engine.ROLES
+PRODUCTION, SERVICE_LABELS, SELF_SERVICE = engine.PRODUCTION, engine.SERVICE_LABELS, engine.SELF_SERVICE
+cost, harvest, waste, stock_saving = engine.cost, engine.harvest, engine.waste, engine.stock_saving
 
 st.set_page_config(page_title='Escape Game A.B.C.', page_icon='🌱', layout='wide')
 
 @st.cache_resource
-def shared_store():
+def shared_store(revision):
     return Store()
 
-store = shared_store()
+store = shared_store('cantine-v2')
 st.title('🌱 Escape Game A.B.C.')
 st.caption('600 repas · Trois équipes · Une réussite collective')
 
