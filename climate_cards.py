@@ -68,7 +68,7 @@ def carbon_comparison():
 def climate_pause(day1, is_master, resume, menus=None):
     st.markdown(STYLE, unsafe_allow_html=True)
     st.subheader('Du plateau au climat · Six cartes pour comprendre')
-    st.write('Votre premier repas est terminé. Regardez les photos, retenez les chiffres, puis reliez les conséquences à vos choix pour demain.')
+    st.write('Votre premier repas est terminé. Lisez les cartes pour comprendre les conséquences de vos choix. Le maître lancera ensuite la suite.')
     definitions = [
         ('farm', '600', 'repas à préparer chaque jour dans votre collège fictif', 'Avant l’assiette, il y a toute une chaîne', 'Cultiver, élever, transporter, conserver et cuisiner demande des ressources. Quand on adapte les commandes aux besoins, on évite de mobiliser des ressources pour des aliments qui finiront jetés.', 'Votre levier : commander selon les besoins réels.', 'Données du scénario A.B.C.', None, 'La photo illustre une récolte ; ce n’est pas votre fournisseur réel.'),
         ('waste', '8 à 10 %', 'des émissions mondiales de gaz à effet de serre', 'Le gaspillage dépasse la poubelle', 'Cette estimation concerne les pertes et le gaspillage alimentaires dans le monde. Produire de la nourriture qui n’est pas mangée mobilise inutilement des ressources et contribue aux émissions.', 'Votre levier : prendre selon sa faim et ajuster les achats.', 'PNUE · Food Waste Index 2024', UNEP_URL, 'Estimation mondiale, pas le pourcentage d’émissions de votre collège. Photo de biodéchets contenant aussi des parties non comestibles.'),
