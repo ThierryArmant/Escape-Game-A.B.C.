@@ -18,7 +18,7 @@ def load_engine(revision):
     import abc_game
     return importlib.reload(abc_game)
 
-engine = load_engine('cantine-v3-master-debat-v2')
+engine = load_engine('cantine-v3-master-debat-reserves')
 Store, MENUS, SERVICES, ROLES = engine.Store, engine.MENUS, engine.SERVICES, engine.ROLES
 PRODUCTION, SERVICE_LABELS, SELF_SERVICE = engine.PRODUCTION, engine.SERVICE_LABELS, engine.SELF_SERVICE
 cost, harvest, waste, stock_saving = engine.cost, engine.harvest, engine.waste, engine.stock_saving
@@ -265,6 +265,7 @@ def menu_picker(s):
         plan_two_days(s)
         return
     event = s['event'] if phase == 3 else None
+    st.info('Menu de secours : lentilles, riz et légumes surgelés déjà en réserve. Coût fictif : 900 € pour 600 repas. Ce choix utilise les stocks existants ; cela ne signifie pas que le riz est une culture peu exigeante en eau.') if phase == 3 and event == 'secheresse' else None
     options = [s['meat_source'], s['animal_offer'], 'vegetal', 'secours'] if phase == 3 else [s['meat_source'], s['animal_offer'], 'vegetal']
     if event == 'inondation':
         options = ['secours']
