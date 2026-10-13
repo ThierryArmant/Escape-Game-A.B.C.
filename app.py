@@ -8,7 +8,7 @@ def load_cards(revision):
     import climate_cards
     return importlib.reload(climate_cards)
 
-cards = load_cards('abc-cartes-six-v1')
+cards = load_cards('abc-cartes-photos-chiffres-v2')
 climate_pause, menu_consequences, sourcing_card = cards.climate_pause, cards.menu_consequences, cards.sourcing_card
 
 @st.cache_resource
@@ -17,7 +17,7 @@ def load_engine(revision):
     import abc_game
     return importlib.reload(abc_game)
 
-engine = load_engine('cantine-v3-courtier-actions')
+engine = load_engine('cantine-v3-master-controls')
 Store, MENUS, SERVICES, ROLES = engine.Store, engine.MENUS, engine.SERVICES, engine.ROLES
 PRODUCTION, SERVICE_LABELS, SELF_SERVICE = engine.PRODUCTION, engine.SERVICE_LABELS, engine.SELF_SERVICE
 cost, harvest, waste, stock_saving = engine.cost, engine.harvest, engine.waste, engine.stock_saving
@@ -32,6 +32,8 @@ def shared_store(revision):
     return Store()
 
 store = shared_store('cantine-v3-courtier-actions')
+# La structure des sessions reste compatible : mettre à jour les méthodes sans effacer les décisions en mémoire.
+store.__class__ = Store
 st.title('🌱 Escape Game A.B.C.')
 st.caption('600 repas · Trois équipes · Une réussite collective')
 
@@ -91,8 +93,8 @@ def mission(role, s):
             if not menu:
                 return 'Attendre les deux menus' if phase == 1 else 'Attendre la révision du jour 2', 'Le chef prépare les deux repas à l’avance, puis réexamine le deuxième après les restes du premier service.'
             pending = [ROLES[r] for r in ('supplier', 'students') if not s['approvals'][r]]
-            return ('Missions encore en cours', 'Attendez : ' + ', '.join(pending) + '.') if pending else ('Prêts pour la suite', 'Les trois équipes ont terminé. La suite se lance automatiquement.')
-        return ('Bilan pris en compte', 'La suite se lance automatiquement.') if s['waste_reviewed'] else ('Les élèves choisissent, le chef consulte les pertes', 'Les résultats se calculent automatiquement. Le chef doit lire le bilan puis confirmer qu’il l’a pris en compte.')
+            return ('Missions encore en cours', 'Attendez : ' + ', '.join(pending) + '.') if pending else ('Prêts pour la suite', 'Les trois équipes ont terminé. Le maître peut cliquer sur « Suivant ».')
+        return ('Bilan pris en compte', 'Le maître peut cliquer sur « Suivant ».') if s['waste_reviewed'] else ('Les élèves choisissent, le chef consulte les pertes', 'Les résultats se calculent automatiquement. Le chef doit lire le bilan puis confirmer qu’il l’a pris en compte.')
     if phase in (1, 3):
         if role == 'supplier':
             if not s['production']:
@@ -114,7 +116,7 @@ def mission(role, s):
             if not menu:
                 return ('Préparer les deux repas', 'Choisissez le menu du jour 1 et celui du jour 2 : variez les plats et vérifiez le budget total, puis envoyez les deux commandes.') if phase == 1 else ('Revoir le menu du jour 2', 'Comparez le menu prévu avec les restes du jour 1, le stock utilisable et l’alerte. Confirmez ou modifiez ce menu pour lancer la nouvelle vérification du courtier.')
             pending = [ROLES[r] for r in ('supplier', 'students') if not s['approvals'][r]]
-            return ('Menu enregistré', 'Votre budget est calculé. Attendez : ' + ', '.join(pending) + '.') if pending else ('Commande validée', 'Tous ont donné leur accord. La suite se lance automatiquement.')
+            return ('Menu enregistré', 'Votre budget est calculé. Attendez : ' + ', '.join(pending) + '.') if pending else ('Commande validée', 'Tous ont donné leur accord. Le maître peut cliquer sur « Suivant ».')
         if not menu:
             return 'Attendre le menu', 'Le chef cuisinier va préparer les deux repas. Il apparaîtra ici ; vous pourrez alors donner votre avis.'
         return ('Votre avis est enregistré', 'Attendez la fin de la mission du courtier et la suite donnée par le maître.') if s['approvals']['students'] else ('Donner l’avis des convives', 'Lisez le menu, imaginez votre plateau et échangez dans votre équipe. Validez le repas proposé, ou demandez un changement au chef cuisinier avant de valider.')
@@ -124,7 +126,7 @@ def mission(role, s):
         if not s['service']:
             return 'Attendre les choix des convives', 'Les élèves choisissent les portions et le libre-service. Le bilan des restes s’affichera automatiquement.'
         if s['waste_reviewed']:
-            return 'Pertes prises en compte', 'La suite se lance automatiquement. Vous réexaminerez le menu du jour 2 après le premier service.'
+            return 'Pertes prises en compte', 'Le maître peut cliquer sur « Suivant ». Vous réexaminerez le menu du jour 2 après le premier service.'
         return 'Lire les résultats du service', 'Les kilogrammes, grammes par élève, pourcentage et pertes en euros sont calculés. Lisez-les, puis cliquez sur « J’ai pris en compte les pertes ».'
     return 'Préparer le prochain repas', 'Votre commande a été vérifiée. Regardez les choix des convives et la mesure du gaspillage ; vous recalculerez votre offre à la manche suivante.'
 
@@ -398,7 +400,10 @@ def game():
         return
     if role == 'master' and phase < 5:
         ready = (bool(s['first']) and bool(s['second']) and all(s['approvals'].values()) and (phase == 1 or s['reviewed'])) if phase in (1, 3) else s['waste_reviewed']
-        st.info('Les manches s’enchaînent automatiquement après les choix des équipes. Vous reprenez la main pour terminer la pause climatique.')
+        st.info('Vous pilotez la progression : les décisions des équipes ne changent pas la manche toutes seules.')
+        if st.button('Suivant', disabled=not ready, type='primary'):
+            act('next')
+        st.caption('Les équipes ont terminé : vous pouvez poursuivre.' if ready else 'En attente des décisions nécessaires : Suivant se déverrouillera lorsqu’elles auront terminé.')
         if st.button('Afficher un indice commun'):
             act('hint')
         st.caption('La sécheresse se déclenche automatiquement entre les deux journées, après la pause illustrée.')

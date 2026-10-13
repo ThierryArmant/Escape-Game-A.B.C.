@@ -283,8 +283,4 @@ class Store:
             session = self._session(auth)
             next_state = copy.deepcopy(session['state'])
             apply(next_state, auth['role'], action, **values)
-            phase = next_state['phase']
-            ready = (phase in (1, 3) and next_state['first'] and next_state['second'] and all(next_state['approvals'].values()) and (phase == 1 or next_state['reviewed'] and next_state['climate_ack'])) or (phase in (2, 4) and next_state['waste_reviewed'])
-            if ready:
-                apply(next_state, 'master', 'next')
             session['state'] = next_state

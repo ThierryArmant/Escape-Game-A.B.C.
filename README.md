@@ -92,7 +92,7 @@ La mise à jour du serveur peut effacer une partie en cours : créer une nouvell
 - Chef cuisinier : deux menus préparés à l’avance ; budget, variété et conséquences affichés.
 - Familles et élèves : choix de service à chaque journée, avec 30 minutes de pause.
 - Aucun calcul à saisir : les résultats se mettent à jour selon les décisions.
-- Les manches avancent automatiquement lorsque les accords sont obtenus et que le chef a pris connaissance du bilan.
+- Le maître pilote chaque passage avec Suivant, déverrouillé après les décisions des équipes.
 - Après le jour 1 : pause commune illustrée sur quatre écrans, reprise par le maître, sécheresse automatique et adaptation du jour 2.
 - Comparaison des deux journées en fin de partie.
 

@@ -6,10 +6,10 @@ Cette version remplace les v1 et v2. Tous les rôles sont joués par des élève
 
 1. Le courtier publie ses offres : légumes conventionnels ou bio, poulet régional ou importé, une offre supplémentaire choisie entre bœuf régional, brésilien, argentin, porc du Ventoux ou poisson.
 2. Le chef compose les menus des jours 1 et 2. Les prix et conséquences sont affichés automatiquement. Une prévision dépassant le budget reste visible comme difficulté à résoudre, mais les commandes ne peuvent pas être confirmées tant que le chef ne la corrige pas.
-3. Le courtier voit les besoins cumulés des deux repas et la vérification des disponibilités. Les élèves donnent leur avis sur les menus. Les deux accords déclenchent automatiquement le jour 1.
+3. Le courtier voit les besoins cumulés des deux repas et la vérification des disponibilités. Les élèves donnent leur avis sur les menus. Les deux accords déverrouillent le bouton Suivant du maître pour lancer le jour 1.
 4. Les élèves choisissent portions et libre-service. Les restes simulés, grammes par élève, pourcentage et coût estimé sont calculés. Le chef clique pour prendre connaissance des pertes.
-5. Ce clic déclenche la pause climatique sur tous les écrans. Six cartes illustrées montrent production, ressources perdues, émissions de l'alimentation et changements du cycle de l'eau. Le maître clique pour reprendre.
-6. Une sécheresse affecte automatiquement les approvisionnements du jour 2. Le chef confirme ou recompose son second menu à partir du menu initial, des pertes, du budget et du stock cru utilisable. Le courtier organise le complément disponible si nécessaire ; les élèves valident. Le jour 2 commence automatiquement.
+5. Après lecture des pertes par le chef, le maître clique sur Suivant pour ouvrir la pause climatique sur tous les écrans. Six cartes illustrées montrent production, ressources perdues, émissions de l'alimentation et changements du cycle de l'eau. Le maître clique pour reprendre.
+6. Une sécheresse affecte automatiquement les approvisionnements du jour 2. Le chef confirme ou recompose son second menu à partir du menu initial, des pertes, du budget et du stock cru utilisable. Le courtier organise le complément disponible si nécessaire ; les élèves valident. Le maître clique sur Suivant pour lancer le jour 2.
 7. Les élèves choisissent le service du jour 2, les résultats sont calculés, le chef prend connaissance du bilan. Le jeu affiche la comparaison des deux journées.
 
 Aucun calcul ni réponse chiffrée à saisir. Les fenêtres donnent l'action suivante, et les tableaux montrent les résultats. Les accords et choix sont partagés entre les écrans. Les changements de menus annulent les accords concernés.
@@ -76,3 +76,13 @@ Aucune empreinte carbone chiffrée n'est inventée pour un pays, un poisson ou u
 Session en mémoire, perdue au redémarrage ; code de classe de confiance, sans noms d'élèves. Une mise à jour majeure peut nécessiter une nouvelle partie d'essai. A.B.C. reste simulé. Les deux menus sont des supports pédagogiques, pas un plan alimentaire scolaire validé. Aucun appel payant à une IA et aucun service externe nécessaire pendant la partie.
 
 Les cartes originales A.B.C. reprennent la pédagogie de liens de cause à conséquence, avec une référence à la démarche de La Fresque du Climat. Elles ne reproduisent ni les textes ni les visuels officiels.
+
+## Cartes photographiques et chiffres de référence
+
+Les cartes utilisent désormais six photographies réelles, conservées dans `assets/photos/`, avec crédits et licences dans `credits.json`. Les recadrages restent soumis à la licence de chaque photo. Les photos illustrent les sujets, sans identifier les fournisseurs fictifs ni attribuer une catastrophe réelle aux choix des joueurs.
+
+Références affichées : bœuf 28 kg CO₂e/kg, porc 6,67, poulet 4,56 (ADEME / Impact CO₂, Agribalyse 3.2, 15 janvier 2025) ; pertes et gaspillage alimentaires 8–10 % des émissions mondiales (PNUE, 2024) ; réchauffement +1,1 °C en moyenne sur 2011–2020 comparé à 1850–1900 (GIEC, synthèse 2023). Ces valeurs sont des moyennes et des estimations documentaires, pas des empreintes mesurées de chaque offre du courtier. Les poissons restent présentés comme variables.
+
+La baisse de 50 % des carottes au jour 2 est explicitement une hypothèse du jeu. Le nombre de 600 repas est celui du scénario.
+
+Sources supplémentaires : https://impactco2.fr/outils/alimentation/boeuf ; https://impactco2.fr/outils/alimentation/porc ; https://impactco2.fr/outils/alimentation/poulet ; https://report.ipcc.ch/ar6syr/headline.html

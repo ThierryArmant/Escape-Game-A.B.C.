@@ -1,0 +1,67 @@
+{
+  "farm": {
+    "title": "File:Potato Harvest - geograph.org.uk - 260603.jpg",
+    "author": "David Wright",
+    "license": "CC BY-SA 2.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/2.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Potato_Harvest_-_geograph.org.uk_-_260603.jpg",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/5/57/Potato_Harvest_-_geograph.org.uk_-_260603.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "file": "farm.jpg",
+    "change": "Recadrage et redimensionnement en 900 × 510 pixels."
+  },
+  "waste": {
+    "title": "File:Food waste in a blue waste container.jpg",
+    "author": "Nick Saltmarsh",
+    "license": "CC BY 2.0",
+    "license_url": "https://creativecommons.org/licenses/by/2.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Food_waste_in_a_blue_waste_container.jpg",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/d/d1/Food_waste_in_a_blue_waste_container.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "description": "Food waste in a blue waste container",
+    "file": "waste.jpg",
+    "change": "Recadrage et redimensionnement en 900 × 510 pixels."
+  },
+  "cattle": {
+    "title": "File:Cattle pasture - geograph.org.uk - 748848.jpg",
+    "author": "Jonathan Billinger",
+    "license": "CC BY-SA 2.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/2.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Cattle_pasture_-_geograph.org.uk_-_748848.jpg",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/8/85/Cattle_pasture_-_geograph.org.uk_-_748848.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "description": "Cattle pasture. Beef animals with calves in the sunshine of a fine spring day near Newton Farm on Bodmin Moor.",
+    "file": "cattle.jpg",
+    "change": "Recadrage et redimensionnement en 900 × 510 pixels."
+  },
+  "industry": {
+    "title": "File:Rostock Power Station, SW view.jpg",
+    "author": "Radomianin",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Rostock_Power_Station,_SW_view.jpg",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/a/a0/Rostock_Power_Station%2C_SW_view.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "description": "Night view of the power station in Rostock, Germany in the area of the international seaport: Aperture f/22, Exposure time 208 seconds",
+    "file": "industry.jpg",
+    "change": "Recadrage et redimensionnement en 900 × 510 pixels."
+  },
+  "water": {
+    "title": "File:Don Puay river bank landscape at sunset.jpg",
+    "author": "Basile Morin",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Don_Puay_river_bank_landscape_at_sunset.jpg",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/c/cb/Don_Puay_river_bank_landscape_at_sunset.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "description": "River bank at sunset from the island of Don Puay, Si Phan Don, Laos. Landscape with submerged shrubs reflecting in the Mekong, water buffaloes bathing, a young girl playing in the sand, and a fisherman on his pirogue at the distance",
+    "file": "water.jpg",
+    "change": "Recadrage et redimensionnement en 900 × 510 pixels."
+  },
+  "drought": {
+    "title": "File:CSIRO ScienceImage 4405 Cracked soil at Chowilla SA.jpg",
+    "author": "Willem van Aken, CSIRO",
+    "license": "CC BY 3.0",
+    "license_url": "https://creativecommons.org/licenses/by/3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:CSIRO_ScienceImage_4405_Cracked_soil_at_Chowilla_SA.jpg",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/b/bb/CSIRO_ScienceImage_4405_Cracked_soil_at_Chowilla_SA.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "description": "Cracked soil at Chowilla, SA.",
+    "file": "drought.jpg",
+    "change": "Recadrage et redimensionnement en 900 × 510 pixels."
+  }
+}
