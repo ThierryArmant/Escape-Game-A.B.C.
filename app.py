@@ -18,7 +18,7 @@ def load_engine(revision):
     import abc_game
     return importlib.reload(abc_game)
 
-engine = load_engine('cantine-v3-master-debat-reserves')
+engine = load_engine('cantine-v3-master-final-card')
 Store, MENUS, SERVICES, ROLES = engine.Store, engine.MENUS, engine.SERVICES, engine.ROLES
 PRODUCTION, SERVICE_LABELS, SELF_SERVICE = engine.PRODUCTION, engine.SERVICE_LABELS, engine.SELF_SERVICE
 cost, harvest, waste, stock_saving = engine.cost, engine.harvest, engine.waste, engine.stock_saving
@@ -366,7 +366,7 @@ def game():
     # Une aide automatique à chaque véritable étape, jamais à chaque frappe dans la calculatrice.
     role, phase = auth['role'], s['phase']
     title, instruction = mission(role, s)
-    context = (auth['code'], role, phase, s['event'], title, instruction, str(s['first']), str(s['second']), s['service'], s['self_service'], s['climate_ack'], s['waste_reviewed'], s.get('debate_decision'))
+    context = (auth['code'], role, phase, s['event'], title, instruction, str(s['first']), str(s['second']), s['service'], s['self_service'], s['climate_ack'], s['waste_reviewed'], s.get('debate_decision'), s.get('final_card_visible', False))
     if st.session_state.get('mission_context') != context:
         st.session_state.mission_context = context
         st.session_state.mission_pending = True
@@ -400,6 +400,10 @@ def game():
     if phase == 3 and not s['climate_ack']:
         climate_pause(s['day1'], role == 'master', lambda: act('climate_resume'), menus=[s['first']['id'], s['original_second']['id']])
         return
+    if role == 'master' and phase in (4, 5):
+        if st.button('Afficher la carte des équivalents CO₂e à tous', type='primary', disabled=phase == 4 and not s['waste_reviewed']):
+            act('show_final_card')
+        st.caption('Ce bouton ouvre la même carte de comparaison et de débat sur les quatre écrans, sans actualisation.')
     if role == 'master' and phase < 5:
         ready = (bool(s['first']) and bool(s['second']) and all(s['approvals'].values()) and (phase == 1 or s['reviewed'])) if phase in (1, 3) else s['waste_reviewed']
         st.info('Vous pilotez la progression : les décisions des équipes ne changent pas la manche toutes seules.')
@@ -421,7 +425,10 @@ def game():
         change = s['day1']['waste'] - s['day2']['waste']
         st.write(f'Évolution : {change:g} kg de restes en moins.' if change >= 0 else f'Évolution : {-change:g} kg de restes en plus. Qu’est-ce qui pourrait être amélioré ?')
         st.write('Quel choix a réduit les restes ? Quelle difficulté a rencontré le courtier ? Que changeriez-vous à votre vraie cantine ?')
-        final_debate(s, role, act)
+        if s.get('final_card_visible'):
+            final_debate(s, role, act)
+        elif role != 'master':
+            st.info('Le maître va afficher la dernière carte des équivalents CO₂e pour le débat commun.')
     with st.expander('Voir les décisions des trois équipes', expanded=role == 'master'):
         st.write('Offre légumes : ' + (PRODUCTION[s['production']]['name'] if s['production'] else 'À choisir'))
         for k, label in [('first', 'Premier repas'), ('second', 'Prochain repas')]:
