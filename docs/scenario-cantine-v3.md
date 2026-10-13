@@ -8,7 +8,7 @@ Cette version remplace les v1 et v2. Tous les rôles sont joués par des élève
 2. Le chef compose les menus des jours 1 et 2. Les prix et conséquences sont affichés automatiquement. Une prévision dépassant le budget reste visible comme difficulté à résoudre, mais les commandes ne peuvent pas être confirmées tant que le chef ne la corrige pas.
 3. Le courtier voit les besoins cumulés des deux repas et la vérification des disponibilités. Les élèves donnent leur avis sur les menus. Les deux accords déclenchent automatiquement le jour 1.
 4. Les élèves choisissent portions et libre-service. Les restes simulés, grammes par élève, pourcentage et coût estimé sont calculés. Le chef clique pour prendre connaissance des pertes.
-5. Ce clic déclenche la pause climatique sur tous les écrans. Quatre cartes illustrées montrent production, ressources perdues, émissions de l'alimentation et changements du cycle de l'eau. Le maître clique pour reprendre.
+5. Ce clic déclenche la pause climatique sur tous les écrans. Six cartes illustrées montrent production, ressources perdues, émissions de l'alimentation et changements du cycle de l'eau. Le maître clique pour reprendre.
 6. Une sécheresse affecte automatiquement les approvisionnements du jour 2. Le chef confirme ou recompose son second menu à partir du menu initial, des pertes, du budget et du stock cru utilisable. Le courtier organise le complément disponible si nécessaire ; les élèves valident. Le jour 2 commence automatiquement.
 7. Les élèves choisissent le service du jour 2, les résultats sont calculés, le chef prend connaissance du bilan. Le jeu affiche la comparaison des deux journées.
 
@@ -74,3 +74,5 @@ Aucune empreinte carbone chiffrée n'est inventée pour un pays, un poisson ou u
 ## Limites techniques
 
 Session en mémoire, perdue au redémarrage ; code de classe de confiance, sans noms d'élèves. Une mise à jour majeure peut nécessiter une nouvelle partie d'essai. A.B.C. reste simulé. Les deux menus sont des supports pédagogiques, pas un plan alimentaire scolaire validé. Aucun appel payant à une IA et aucun service externe nécessaire pendant la partie.
+
+Les cartes originales A.B.C. reprennent la pédagogie de liens de cause à conséquence, avec une référence à la démarche de La Fresque du Climat. Elles ne reproduisent ni les textes ni les visuels officiels.

@@ -13,12 +13,20 @@ CARDS = [
     ('4 · Un climat plus chaud fragilise les récoltes', svg('<circle cx="370" cy="65" r="40" fill="#e5b653"/><path d="M315 65H290M425 65H450M370 10V0M330 25L310 5M410 25L430 5" stroke="#e5b653" stroke-width="7"/><path d="M0 170Q140 135 280 170T480 170V240H0Z" fill="#c79562"/><path d="M80 190l20 20-15 25M235 180l-20 20 25 20-10 20M380 185l25 20-15 35" fill="none" stroke="#805f43" stroke-width="6"/><path d="M145 165V95M145 130q-35-15-40-40q35 0 40 40M145 145q35-15 40-40q-35 0-40 40" stroke="#8b9460" stroke-width="8" fill="none"/>', '#fbefda'), 'Les gaz à effet de serre renforcent le réchauffement. Celui-ci modifie le cycle de l’eau et peut augmenter le risque de sécheresse dans certaines régions. Des sols plus secs et un manque d’eau peuvent réduire les récoltes : moins de produits disponibles, des remplacements et des prix qui changent.'),
 ]
 
+# Cartes originales A.B.C. : une chaîne de mécanismes, avec textes et illustrations propres au jeu.
+CARDS = CARDS[:3] + [
+    ('4 · Plus de gaz, plus de chaleur retenue', svg('<circle cx="240" cy="130" r="67" fill="#80b2be"/><path d="M210 80l-25 40 35 15 5 40 35-20 5-35 35-10-40-30Z" fill="#76a365"/><ellipse cx="240" cy="130" rx="100" ry="95" fill="none" stroke="#b0c6d4" stroke-width="12"/><circle cx="70" cy="45" r="25" fill="#e5b653"/><path d="M90 60l80 55M180 150l-55 35M295 140l55-30-5 55-35-5" fill="none" stroke="#d38357" stroke-width="9"/>'), 'L’effet de serre naturel garde la Terre habitable. Les gaz ajoutés par les activités humaines retiennent davantage de chaleur : le climat se réchauffe. Nos choix alimentaires font partie des activités qui émettent ces gaz.'),
+    ('5 · Le cycle de l’eau se modifie', svg('<path d="M0 180Q100 150 200 185T480 180V240H0Z" fill="#6ba3be"/><path d="M45 175L130 60l90 120Z" fill="#9db3a0"/><path d="M104 95l26-35 28 35Z" fill="#f9fcfa"/><path d="M270 95q-10-45 40-40q25-35 50-10q50-5 45 35q25 25-20 30H290Z" fill="#c4d5dd"/><path d="M250 170V120l-12 15M250 120l12 15" fill="none" stroke="#d69259" stroke-width="8"/><path d="M320 120l-8 25M360 120l-8 25M400 120l-8 25" stroke="#6ba3be" stroke-width="7"/>'), 'L’eau s’évapore, forme des nuages et retombe en précipitations. Avec le réchauffement, l’évaporation et les pluies changent. Selon les régions et les saisons, le risque de sécheresse ou de pluies intenses peut augmenter.'),
+    ('6 · Récoltes fragilisées, menus à adapter', CARDS[3][1], 'Moins d’eau disponible peut réduire les récoltes. Le fournisseur a moins de produits ; le courtier cherche des alternatives ; le chef adapte le menu et le budget. Votre mission est de nourrir les élèves tout en limitant les pertes.'),
+]
+
 def climate_pause(day1, is_master, resume, menus=None):
     st.subheader('Pause commune · Du plateau au climat')
     st.info(f'Au jour 1, vos choix ont laissé {day1["waste"]} kg de restes comestibles. Prenons un moment pour comprendre pourquoi cela compte aussi pour la planète.')
     if menus and sum(m in ('boeuf', 'boeuf_bresil', 'boeuf_argentine') for m in menus) == 2:
         st.warning('Votre prévision contenait du bœuf aux deux repas. Ce choix sollicite davantage une filière d’élevage de ruminants ; une offre moins chère ne supprime pas cet enjeu. Vous pouvez essayer une autre composition pour le jour 2.')
-    for offset in (0, 2):
+    st.write('**Reliez les cartes :** repas et ressources → émissions → chaleur retenue → cycle de l’eau modifié → récoltes fragilisées → adaptations à la cantine.')
+    for offset in range(0, len(CARDS), 2):
         columns = st.columns(2)
         for column, (title, image, text) in zip(columns, CARDS[offset:offset+2]):
             with column:
@@ -28,8 +36,9 @@ def climate_pause(day1, is_master, resume, menus=None):
                     st.write(text)
     st.warning('Dans le jeu, une sécheresse frappe les fournisseurs du jour 2. C’est une mise en situation : les déchets de votre premier repas n’ont pas causé à eux seuls cette sécheresse. Les émissions et les risques climatiques s’accumulent à grande échelle et sur une longue durée.')
     st.write('**Votre mission suivante :** nourrir tout le monde, varier les menus, ajuster les portions et adapter les approvisionnements aux récoltes disponibles.')
+    st.caption('Cartes originales A.B.C., inspirées de la pédagogie des liens de cause à conséquence. Elles ne sont pas les cartes officielles de La Fresque du Climat.')
     with st.expander('Sources pour approfondir'):
-        st.markdown('[PNUE — pertes, gaspillage et émissions](https://www.unep.org/news-and-stories/press-release/world-squanders-over-1-billion-meals-day-un-report) · [GIEC — alimentation et élevage](https://www.ipcc.ch/srccl/chapter/chapter-5/) · [GIEC — eau et sécheresses](https://www.ipcc.ch/report/ar6/wg2/chapter/chapter-4/)')
+        st.markdown('[La Fresque du Climat — démarche collaborative](https://fresqueduclimat.org/projet/) · [PNUE — pertes, gaspillage et émissions](https://www.unep.org/news-and-stories/press-release/world-squanders-over-1-billion-meals-day-un-report) · [GIEC — alimentation et élevage](https://www.ipcc.ch/srccl/chapter/chapter-5/) · [GIEC — eau et sécheresses](https://www.ipcc.ch/report/ar6/wg2/chapter/chapter-4/)')
     if is_master:
         if st.button('Reprendre la mission : adapter le jour 2', type='primary'):
             resume()

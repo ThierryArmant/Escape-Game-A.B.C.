@@ -4,6 +4,14 @@ from climate_cards import climate_pause, menu_consequences, sourcing_card, NUTRI
 import importlib
 
 @st.cache_resource
+def load_cards(revision):
+    import climate_cards
+    return importlib.reload(climate_cards)
+
+cards = load_cards('abc-cartes-six-v1')
+climate_pause, menu_consequences, sourcing_card = cards.climate_pause, cards.menu_consequences, cards.sourcing_card
+
+@st.cache_resource
 def load_engine(revision):
     # Streamlit peut relancer app.py sans recharger les modules importés.
     import abc_game
@@ -71,7 +79,7 @@ def mission(role, s):
     phase = s['phase']
     menu = (s['first'] if phase == 1 and s['second'] else s['second'] if phase == 3 and s['reviewed'] else None) if phase in (1, 3) else None
     if phase == 3 and not s['climate_ack']:
-        return 'Pause commune : comprendre le climat', 'Lisez les quatre cartes après le premier repas. Le maître reprendra ensuite la mission du jour 2.'
+        return 'Pause commune : comprendre le climat', 'Lisez les six cartes après le premier repas. Le maître reprendra ensuite la mission du jour 2.'
     if phase == 1 and s['first'] and s['second'] and s['first']['cost'] + s['second']['cost'] > 3000:
         return ('Revoir votre prévision', 'Ces deux menus dépassent le budget : ouvrez la modification et essayez une autre combinaison.') if role == 'manager' else ('Budget insuffisant', 'Le chef doit modifier les menus avant la commande. Le total et le déficit sont affichés sur les écrans.')
     if phase == 5:
