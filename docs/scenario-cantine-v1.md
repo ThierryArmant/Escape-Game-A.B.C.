@@ -87,10 +87,11 @@ Les pommes de terre du prochain service coûtent 180 € au lieu de 144 €.
 Choix : accepter le menu adapté, changer de recette, ou mobiliser une réserve budgétaire.
 
 ### Inondation
-Une route ferme : le poulet importé et le riz nouvellement commandés ne peuvent pas arriver pour le second service. Les commandes du premier service restent servies.
-Un lot de riz de réserve est immédiatement disponible à 90 €; les lentilles sont confirmées pour le lendemain à 108 €; les légumes surgelés sont disponibles.
-Menu de secours lentilles + riz de réserve + légumes surgelés : 900 € avec la base fixe.
-Les élèves peuvent conserver le poulet régional si sa disponibilité et le budget sont confirmés.
+Des parcelles du fournisseur régional sont inondées : les récoltes de carottes et de pommes de terre destinées au prochain service sont détruites. Le stock de ces produits passe à zéro pour ce service. Le producteur perd les revenus attendus de cette récolte tout en ayant déjà engagé des dépenses de production. Aucun montant de perte n'est inventé dans cette version.
+Les commandes du premier service restent servies. Le poulet et le riz ne sont pas directement touchés par cette destruction des cultures.
+Un lot de riz de réserve est immédiatement disponible à 90 €; les lentilles sont confirmées pour le lendemain à 108 €; les légumes surgelés proviennent d'un stock non touché.
+Menu de secours lentilles + riz de réserve + légumes surgelés : 900 € en situation ordinaire. Lors de l'inondation, la raréfaction de l'offre et la demande de remplacement font augmenter les prix : lentilles 144 € (+36 €), riz de réserve 126 € (+36 €), légumes surgelés 270 € (+108 €), base fixe 540 €. Total : 1 080 €, soit +180 € et +20 % sur le menu complet. Ces hausses sont des hypothèses fictives, pas une règle économique automatique. Dans cette première application aux menus prédéfinis, il constitue l'alternative proposée.
+Les équipes discutent aussi d'un soutien au producteur : maintenir le contact, prévoir une prochaine commande lorsque la production reprend, et éviter de lui demander une livraison impossible. Ces engagements sont discutés oralement et ne modifient pas automatiquement les stocks ou le budget.
 
 Une commande du second service annulée par le scénario n'est pas facturée. Le jeu n'invente donc pas une double dépense. Les contraintes de contrats réels sont hors de cette version.
 
