@@ -127,3 +127,43 @@ def sourcing_card():
             {'Offre': 'Poisson', 'À regarder': 'Espèce, pêche ou élevage, carburant, conservation.', 'Point clé': 'Empreinte variable : pas de valeur unique pour tous les poissons.'},
         ])
         st.caption('Cours et prix fictifs. Les chiffres ADEME sont des références documentaires indépendantes des prix du scénario.')
+
+def final_debate(s, role, send):
+    st.markdown(STYLE, unsafe_allow_html=True)
+    st.subheader('Dernière carte · Prix, provenance et climat : que choisit-on vraiment ?')
+    st.write('Vous préparez le prochain repas pour les mêmes 600 élèves. Le prix le plus bas suffit-il pour choisir ? Comparez les trois offres, leur provenance et leurs repères carbone, puis défendez votre choix.')
+    a, b, c = st.columns(3)
+    with c:
+        render_photo_card(3, 'cattle', '396 €', 'pour 72 kg de bœuf dans le scénario : 600 portions de 120 g', 'Offre C · Bœuf brésilien', 'Le prix est le plus bas de ces trois offres fictives. Mais le repère moyen du bœuf est de 28 kg CO₂e par kg : pour ces 600 portions, environ les émissions de 18 trajets Marseille–Paris en voiture diesel.', 'Prix, élevage, alimentation, terres et transport : quelles informations demander au courtier ?', 'ADEME · Agribalyse 3.2 · Impact CO₂', BEEF_URL, 'Prix et origine fictifs. Le carbone est une moyenne pour le bœuf, pas une mesure de cet élevage brésilien. Photo illustrative.')
+    with a:
+        render_photo_card(1, 'chicken', '432 €', 'pour 72 kg de poulet dans le scénario : 600 portions de 120 g', 'Offre A · Poulet brésilien', 'Repère carbone moyen du poulet : 4,56 kg CO₂e par kg. Pour 600 portions : environ 328 kg CO₂e, soit l’équivalent de 3 trajets Marseille–Paris en voiture diesel.', 'À vérifier : élevage, alimentation des animaux, traçabilité et transport.', 'ADEME · Agribalyse 3.2 · Impact CO₂', CHICKEN_URL, 'Le prix et l’origine de cette offre sont fictifs. Le carbone est une moyenne de référence pour le poulet, pas une mesure de cet élevage brésilien. Photo illustrative.')
+    with b:
+        render_photo_card(2, 'pig', '504 €', 'pour 72 kg de porc dans le scénario : 600 portions de 120 g', 'Offre B · Porc du Ventoux', 'Repère carbone moyen du porc : 6,67 kg CO₂e par kg. Pour 600 portions : environ 480 kg CO₂e, soit l’équivalent de 4 trajets Marseille–Paris en voiture diesel.', 'À vérifier : ferme, pratiques d’élevage, alimentation, prix versé au producteur.', 'ADEME · Agribalyse 3.2 · Impact CO₂', PORK_URL, 'Le prix et l’origine de cette offre sont fictifs. Le carbone est une moyenne de référence pour le porc, pas une mesure de la ferme du Ventoux. Photo illustrative.')
+    st.info('Dans le scénario : bœuf brésilien 396 €, poulet brésilien 432 €, porc du Ventoux 504 €. Le moins cher à acheter a ici le repère carbone moyen le plus élevé. Ces prix fictifs et les références carbone ne mesurent pas les mêmes choses.')
+    st.write('**La provenance mérite une enquête :** comment sont élevés les animaux ? Avec quelle alimentation ? Y a-t-il un changement d’usage des terres ? Quel transport et quelle conservation ? Quel prix reçoit le producteur ? Être proche ou loin ne répond pas à toutes ces questions.')
+    st.write('**Questions pour débattre :** que gagne-t-on avec chaque offre ? Quelles informations manquent ? Peut-on soutenir une ferme proche tout en variant les sources de protéines au fil des menus ?')
+    labels = {'E': 'Bœuf brésilien : priorité au prix, malgré le repère carbone moyen élevé', 'A': 'Poulet brésilien : priorité au prix et au repère carbone moyen', 'B': 'Porc du Ventoux : priorité à la proximité, avec des pratiques à vérifier', 'C': 'Alterner les offres et des repas avec légumes secs', 'D': 'Demander les données des fournisseurs avant de décider'}
+    if role != 'master':
+        st.caption('Il n’y a pas de bonne réponse imposée. Après échange, retenez un choix et un argument.')
+        with st.form('debate_vote'):
+            choice = st.radio('La proposition de notre équipe', list(labels), format_func=labels.get)
+            reason = st.selectbox('Notre argument principal', ['Budget de la cantine', 'Émissions de gaz à effet de serre', 'Lien avec les producteurs proches', 'Variété des repas', 'Informations et traçabilité'])
+            if st.form_submit_button('Partager notre choix pour le débat', type='primary'):
+                send('debate', value=choice, reason=reason)
+    votes = s.get('debate_votes', {})
+    if votes:
+        from abc_game import ROLES
+        st.table([{'Équipe': ROLES[r], 'Choix': labels[v['choice']], 'Argument': v['reason']} for r, v in votes.items()])
+    if role == 'master':
+        st.info('Donnez la parole aux trois équipes. Aidez-les à distinguer les chiffres documentés, les hypothèses de prix et les informations à vérifier.')
+        if len(votes) == 3 and not s.get('debate_decision'):
+            with st.form('debate_decision'):
+                decision = st.selectbox('Notre décision collective après le débat', list(labels), format_func=labels.get)
+                if st.form_submit_button('Afficher notre décision collective', type='primary'):
+                    send('debate_close', value=decision)
+    if s.get('debate_decision'):
+        st.success('Décision collective : ' + labels[s['debate_decision']])
+        st.write('Pour votre vraie cantine : quelle information demander et quel geste changer dès le prochain repas ?')
+    with st.expander('Sources et hypothèses de la comparaison'):
+        st.markdown('[Poulet — ADEME / Agribalyse](' + CHICKEN_URL + ') · [Porc — ADEME / Agribalyse](' + PORK_URL + ') · [Voiture moyenne diesel — ADEME](https://impactco2.fr/outils/transport/voiturethermique)')
+        st.write('Calculs automatiques : bœuf 72 × 28 = 2 016 kg CO₂e ; poulet 72 × 4,56 = 328,32 kg CO₂e ; 72 × 6,67 = 480,24 kg CO₂e. Un trajet illustratif est un aller simple d’environ 800 km, avec le facteur de 142 g CO₂e/km. Les équivalents sont arrondis et comparent des cycles de vie. Les prix sont fictifs ; la source carbone est Agribalyse 3.2, mise à jour le 15 janvier 2025.')

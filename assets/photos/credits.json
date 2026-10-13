@@ -63,5 +63,27 @@
     "description": "Cracked soil at Chowilla, SA.",
     "file": "drought.jpg",
     "change": "Recadrage et redimensionnement en 900 × 510 pixels."
+  },
+  "chicken": {
+    "title": "File:Free Range Chickens - geograph.org.uk - 395034.jpg",
+    "author": "Martin Addison",
+    "license": "CC BY-SA 2.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/2.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Free_Range_Chickens_-_geograph.org.uk_-_395034.jpg",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/f/f6/Free_Range_Chickens_-_geograph.org.uk_-_395034.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "file": "chicken.jpg",
+    "change": "Recadrage et redimensionnement en 900 × 510 pixels.",
+    "description": "Free Range Chickens Chickens approach the fence in the hope of getting some feed on Bury Farm."
+  },
+  "pig": {
+    "title": "File:Outdoor Pig Farm - geograph.org.uk - 77167.jpg",
+    "author": "Hugh Venables",
+    "license": "CC BY-SA 2.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/2.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Outdoor_Pig_Farm_-_geograph.org.uk_-_77167.jpg",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/c/c2/Outdoor_Pig_Farm_-_geograph.org.uk_-_77167.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "file": "pig.jpg",
+    "change": "Recadrage et redimensionnement en 900 × 510 pixels.",
+    "description": "Outdoor Pig Farm. Nice to see, but then you don't see those reared indoors"
   }
 }

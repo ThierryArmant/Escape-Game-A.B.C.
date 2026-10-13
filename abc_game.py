@@ -94,7 +94,7 @@ def waste(s):
     return max(0, SERVICES[s['service']][1] + SELF_SERVICE[s.get('self_service', 'tout')][1])
 
 def initial():
-    return dict(waste_reviewed=False, climate_ack=False, animal_offer='boeuf', beef_source='regional', meat_source=None, original_second=None, reviewed=False, day1=None, day2=None, phase=1, event=None, started=time.time(), hint=False, first=None, second=None, service=None, self_service='tout', measure=False, grams_done=False, production=None, harvest_done=False, supply_done=False, supply_strategy=None, approvals={'supplier': False, 'students': False})
+    return dict(debate_votes={}, debate_decision=None, waste_reviewed=False, climate_ack=False, animal_offer='boeuf', beef_source='regional', meat_source=None, original_second=None, reviewed=False, day1=None, day2=None, phase=1, event=None, started=time.time(), hint=False, first=None, second=None, service=None, self_service='tout', measure=False, grams_done=False, production=None, harvest_done=False, supply_done=False, supply_strategy=None, approvals={'supplier': False, 'students': False})
 
 def reset_supply(s):
     ready = bool(s['first'] and s['second']) and (s['phase'] == 1 or s['reviewed'])
@@ -115,6 +115,10 @@ def apply(s, role, action, **values):
             if s['phase'] != 3:
                 raise ValueError('La pause apparaît après le premier repas.')
             s['climate_ack'] = True
+        elif action == 'debate_close':
+            if s['phase'] != 5 or len(s.get('debate_votes', {})) != 3 or values.get('value') not in ('A', 'B', 'C', 'D', 'E'):
+                raise ValueError('Les trois équipes doivent proposer leur choix avant la décision collective.')
+            s['debate_decision'] = values['value']
         elif action == 'hint':
             s['hint'] = True
         elif action == 'next':
@@ -142,6 +146,12 @@ def apply(s, role, action, **values):
         return
     if s['phase'] == 3 and not s['climate_ack']:
         raise ValueError('Lisez les cartes : le maître va reprendre la mission.')
+    if action == 'debate' and s['phase'] == 5 and role in ('students', 'manager', 'supplier'):
+        if values.get('value') not in ('A', 'B', 'C', 'D', 'E') or values.get('reason') not in ('Budget de la cantine', 'Émissions de gaz à effet de serre', 'Lien avec les producteurs proches', 'Variété des repas', 'Informations et traçabilité'):
+            raise ValueError('Choisissez une proposition et un argument.')
+        s.setdefault('debate_votes', {})[role] = {'choice': values['value'], 'reason': values['reason']}
+        s['debate_decision'] = None
+        return
     if action == 'production' and role == 'supplier' and s['phase'] == 1:
         mode = values.get('value')
         if mode not in PRODUCTION:

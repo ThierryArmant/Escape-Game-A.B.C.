@@ -86,3 +86,9 @@ Références affichées : bœuf 28 kg CO₂e/kg, porc 6,67, poulet 4,56 (ADEME /
 La baisse de 50 % des carottes au jour 2 est explicitement une hypothèse du jeu. Le nombre de 600 repas est celui du scénario.
 
 Sources supplémentaires : https://impactco2.fr/outils/alimentation/boeuf ; https://impactco2.fr/outils/alimentation/porc ; https://impactco2.fr/outils/alimentation/poulet ; https://report.ipcc.ch/ar6syr/headline.html
+
+## Débat final après le jour 2
+
+Le maître ouvre le bilan avec Suivant sur les quatre écrans. Une dernière carte confronte trois offres fictives pour la viande seule des 600 repas : bœuf brésilien 396 €, poulet brésilien 432 €, porc du Ventoux 504 €. Les repères carbone restent les moyennes ADEME/Agribalyse pour bœuf (28), poulet (4,56) et porc (6,67), en kg CO₂e/kg : ils ne sont pas présentés comme des empreintes mesurées de ces pays ou fournisseurs. Les équivalents illustratifs sont respectivement 18, 3 et 4 allers simples Marseille–Paris, pour 600 portions de 120 g, avec le facteur de 142 g CO₂e/km d'une voiture moyenne diesel et une distance arrondie à 800 km.
+
+Les équipes proposent une offre, une alternance de menus ou une demande d'informations supplémentaires et choisissent un argument. Les trois propositions apparaissent sur les écrans ; le maître affiche ensuite une décision collective. Aucune bonne réponse unique n'est imposée. Le débat interroge l'élevage, l'alimentation animale, les terres, le transport, la traçabilité et la rémunération du producteur. Il ne suppose pas qu'un aliment lointain émet automatiquement davantage qu'un aliment local.
