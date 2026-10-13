@@ -182,7 +182,10 @@ def supplier_panel(s):
     if not s['harvest_done']:
         math_question(f'harvest_{phase}_{menu["id"]}_{s["event"]}', '2 · Calculer la quantité disponible', f'{h["name"]} : vous avez {h["plots"]} {h["unit"]}. Chacune fournit {h["yield"]} kg. Combien de kilogrammes sont disponibles en tout ?', h['quantity'], 'kg', 'harvest', [f'Multipliez les {h["plots"]} {h["unit"]} par les {h["yield"]} kg de chacune.', f'L’opération est : {h["plots"]} × {h["yield"]}. Utilisez la calculatrice si besoin.'])
         return
-    st.success(f'Quantité disponible vérifiée : {h["quantity"]} kg de {h["name"].lower()}.')
+    st.success('Votre calcul est validé !')
+    st.subheader('Correction de votre calcul')
+    st.write(f'**{h["plots"]} {h["unit"]} × {h["yield"]} kg = {h["quantity"]} kg** de {h["name"].lower()}.')
+    st.caption('On additionne la même quantité pour chaque parcelle ou caisse : la multiplication donne le total disponible.')
     if not s['supply_done']:
         st.subheader('3 · Avez-vous assez pour la cantine ?')
         st.write(f'Votre stock : **{h["quantity"]} kg**. Commande : **{h["need"]} kg**.')
@@ -193,6 +196,14 @@ def supplier_panel(s):
         with st.expander('Besoin d’aide pour comparer ?'):
             st.write('Si le stock est égal ou supérieur à la commande, vous avez assez. Sinon, la quantité manquante est : commande − stock.')
         return
+    st.subheader('Correction de la comparaison')
+    if h['quantity'] >= h['need']:
+        surplus = h['quantity'] - h['need']
+        st.write(f'**{h["quantity"]} kg disponibles ≥ {h["need"]} kg commandés** : vous avez assez pour livrer.')
+        st.caption(f'Après livraison : {h["quantity"]} − {h["need"]} = {surplus} kg encore en stock.')
+    else:
+        st.write(f'**{h["quantity"]} kg disponibles < {h["need"]} kg commandés** : votre récolte seule ne suffit pas.')
+        st.caption(f'Quantité à compléter : {h["need"]} − {h["quantity"]} = {h["need"] - h["quantity"]} kg.')
     if not s['supply_strategy']:
         missing = h['need'] - h['quantity']
         st.warning(f'Il manque {missing} kg. Votre calcul a permis de repérer le problème !')
@@ -273,7 +284,8 @@ def students_panel(s):
                 st.info('Le chef propose pour demain : ' + menu['adaptation'])
             if menu.get('reuse'):
                 st.caption('Le chef utilise aussi des légumes crus encore disponibles dans son stock de la veille.')
-            st.write('Imaginez votre plateau : connaissez-vous ce plat ? Aimeriez-vous goûter ? Une petite portion ou une plus grande vous conviendrait-elle ?')
+            st.write('Voici le plat proposé : connaissez-vous ce plat ? Est-il acceptable pour les convives ? Validez ce repas ou demandez un changement au chef avant de valider.')
+            st.info('Vous validez ici le choix du plat. Les portions et les entrées/desserts en libre-service se choisissent à la manche 2, après le passage à la suite par le maître.')
             if not s['approvals']['students'] and st.button('Valider ce repas pour les convives', type='primary'):
                 act('approve')
         return
