@@ -17,6 +17,7 @@ class ChoiceGameTests(unittest.TestCase):
     def setup_game(self, source='regional', mode='conventionnel'):
         store=GuidedStore();master=store.create();roles={r:store.join(master['code'],r) for r in ('manager','students','supplier')}
         store.action(roles['supplier'],'production',value=mode,source=source)
+        store.action(roles['students'],'preferences',first=source,second='vegetal')
         return store,master,roles
     def play(self,source,mode):
         store,master,r=self.setup_game(source,mode)
@@ -89,35 +90,30 @@ class ChoiceGameTests(unittest.TestCase):
 if __name__=='__main__':unittest.main()
 
 class CommonPauseTests(unittest.TestCase):
-    def test_parallel_start_broadcast_pause_and_clock(self):
+    def test_first_effect_waits_for_every_team_and_appears_once(self):
         from abc_game import elapsed
-        store = Store(); master = store.create()
-        roles = {r: store.join(master['code'], r) for r in ('students', 'manager', 'supplier')}
-        self.assertEqual(elapsed(store.read(master), now=9999999999), 0)
-        with self.assertRaises(ValueError):
-            store.action(roles['manager'], 'plans', first='vegetal', second='regional')
-        store.action(master, 'start_game')
-        # Chef can send both menus before a broker offer exists.
-        store.action(roles['manager'], 'plans', first='vegetal', second='regional')
-        state = store.read(master)
-        self.assertIsNone(state['production'])
-        self.assertEqual(state['reflection']['role'], 'manager')
-        frozen = elapsed(state, now=9999999999)
-        self.assertEqual(frozen, elapsed(state, now=19999999999))
-        for auth in roles.values():
-            self.assertEqual(store.read(auth)['reflection'], state['reflection'])
-        with self.assertRaises(ValueError):
-            store.action(roles['supplier'], 'production', value='bio')
-        with self.assertRaises(ValueError):
-            store.action(roles['students'], 'resume_reflection')
-        store.action(master, 'resume_reflection')
-        # Pupils can express a request even when menus are already drafted.
-        store.action(roles['students'], 'preferences', first='importe', second='vegetal')
-        store.action(master, 'resume_reflection')
-        store.action(roles['supplier'], 'production', value='bio', source='regional')
-        state = store.read(master)
-        self.assertEqual(state['first']['cost'], cost('vegetal', mode='bio'))
-        self.assertFalse(state['approvals']['students'])
+        store=Store();master=store.create()
+        roles={r:store.join(master['code'],r) for r in ('students','manager','supplier')}
+        self.assertEqual(elapsed(store.read(master),now=9999999999),0)
+        store.action(master,'start_game')
+        store.action(roles['manager'],'plans',first='vegetal',second='regional')
+        self.assertIsNone(store.read(master)['reflection'])
+        store.action(roles['students'],'preferences',first='vegetal',second='regional')
+        self.assertIsNone(store.read(master)['reflection'])
+        store.action(roles['supplier'],'production',value='bio',source='regional')
+        store.action(roles['supplier'],'approve')
+        self.assertIsNone(store.read(master)['reflection'])
+        store.action(roles['students'],'approve')
+        state=store.read(master)
+        self.assertTrue(state['first_effect_shown'])
+        self.assertIn('Effets n°1',state['reflection']['title'])
+        for auth in roles.values():self.assertEqual(store.read(auth)['reflection'],state['reflection'])
+        self.assertEqual(elapsed(state,now=9999999999),elapsed(state,now=19999999999))
+        with self.assertRaises(ValueError):store.action(roles['students'],'resume_reflection')
+        store.action(master,'resume_reflection')
+        store.action(roles['students'],'approve')
+        self.assertIsNone(store.read(master)['reflection'])
+        self.assertEqual(store.read(master)['first']['cost'],cost('vegetal',mode='bio'))
 
 class AbcMenuTests(unittest.TestCase):
     def test_observed_rates_drive_scenario_and_recycling_choice(self):
@@ -125,7 +121,7 @@ class AbcMenuTests(unittest.TestCase):
         s=initial();apply(s,'master','start_game')
         apply(s,'manager','plans',first='abc_cantine',second='vegetal')
         self.assertEqual(requirements(s)['Chou-fleur en gratin'],90)
-        apply(s,'master','resume_reflection')
+        self.assertIsNone(s['reflection'])
         s['phase']=2
         apply(s,'students','service',value='unique',self_service='tout')
         self.assertEqual(waste(s),106)
