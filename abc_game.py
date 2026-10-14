@@ -109,7 +109,7 @@ def waste(s):
     return max(0, simulated + SELF_SERVICE[s.get('self_service', 'tout')][1])
 
 def initial():
-    return dict(waste_policy={}, game_started=False, active_elapsed=0, active_since=None, reflection=None, notices=[], preferences=None, final_card_visible=False, debate_votes={}, debate_decision=None, waste_reviewed=False, climate_ack=False, animal_offer='boeuf', beef_source='regional', meat_source=None, original_second=None, reviewed=False, day1=None, day2=None, phase=1, event=None, started=time.time(), hint=False, first=None, second=None, service=None, self_service='tout', measure=False, grams_done=False, production=None, harvest_done=False, supply_done=False, supply_strategy=None, approvals={'supplier': False, 'students': False})
+    return dict(first_effect_shown=False, waste_policy={}, game_started=False, active_elapsed=0, active_since=None, reflection=None, notices=[], preferences=None, final_card_visible=False, debate_votes={}, debate_decision=None, waste_reviewed=False, climate_ack=False, animal_offer='boeuf', beef_source='regional', meat_source=None, original_second=None, reviewed=False, day1=None, day2=None, phase=1, event=None, started=time.time(), hint=False, first=None, second=None, service=None, self_service='tout', measure=False, grams_done=False, production=None, harvest_done=False, supply_done=False, supply_strategy=None, approvals={'supplier': False, 'students': False})
 
 def reset_supply(s):
     ready = bool(s['first'] and s['second']) and (s['phase'] == 1 or s['reviewed'])
@@ -144,6 +144,8 @@ def apply_core(s, role, action, **values):
             s['hint'] = True
         elif action == 'next':
             p = s['phase']
+            if p == 1 and 'first_effect_shown' in s and not s['first_effect_shown']:
+                raise ValueError('Attendez les choix de toutes les équipes et la lecture commune des effets n°1.')
             if p == 3 and not s['climate_ack']:
                 raise ValueError('Terminez la pause commune avant de poursuivre.')
             if p in (1, 3) and (not s['first'] or not s['second'] or not all(s['approvals'].values()) or p == 3 and not s['reviewed']):
@@ -321,7 +323,17 @@ def apply(s, role, action, **values):
     if s['phase'] == 5 and s.get('active_since'):
         s['active_elapsed'] = elapsed(s)
         s['active_since'] = None
-    if action in REFLECTIONS:
+    if s['phase'] == 1 and action in REFLECTIONS:
+        _, title, effect, question, photo = REFLECTIONS[action]
+        s.setdefault('notices', []).append({'action': action, 'role': role, 'title': title, 'effect': effect, 'question': question, 'photo': photo, 'number': len(s.get('notices', [])) + 1})
+        s['notices'] = s['notices'][-30:]
+        ready = bool(s.get('preferences') and s['production'] and s['first'] and s['second'] and all(s['approvals'].values()))
+        if ready and not s.get('first_effect_shown'):
+            s['first_effect_shown'] = True
+            note = {'action': 'plans', 'role': 'master', 'title': 'Effets n°1 · Les trois équipes ont choisi', 'effect': 'Les menus, les achats et l’avis des élèves sont validés. Regardons ensemble leurs conséquences.', 'question': 'Que mobilise notre repas avant d’arriver dans l’assiette ? Que perd-on lorsqu’il est jeté ?', 'photo': 'waste', 'number': 1}
+            s['active_elapsed'] = elapsed(s)
+            s.update(active_since=None, reflection=note)
+    elif action in REFLECTIONS:
         _, title, effect, question, photo = REFLECTIONS[action]
         note = {'action': action, 'role': role, 'title': title, 'effect': effect, 'question': question, 'photo': photo, 'number': len(s.get('notices', [])) + 1}
         s.setdefault('notices', []).append(note)
