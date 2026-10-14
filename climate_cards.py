@@ -5,6 +5,7 @@ import base64
 import html
 import json
 import streamlit as st
+import abc_game as GAME_ENGINE
 
 NUTRITION_URL = 'https://www.mangerbouger.fr/manger-mieux/a-tout-age-et-a-chaque-etape-de-la-vie/enfants-et-adolescents-de-4-a-17-ans/les-recommandations-alimentaires-pour-les-4-17-ans'
 PHOTO_ROOT = Path(__file__).parent / 'assets' / 'photos'
@@ -216,8 +217,8 @@ def reflection_card(note, s, is_master, resume):
     if note['role'] == 'supplier' and note['photo'] == 'farm':
         purchase_reveal(s)
     if s.get('first') and s.get('second'):
-        st.write('**Jour 1 :** ' + __import__('abc_game').MENUS[s['first']['id']][0])
-        st.write('**Jour 2 :** ' + __import__('abc_game').MENUS[s['second']['id']][0])
+        st.write('**Jour 1 :** ' + GAME_ENGINE.MENUS[s['first']['id']][0])
+        st.write('**Jour 2 :** ' + GAME_ENGINE.MENUS[s['second']['id']][0])
         st.metric('Budget restant sur les deux repas', f"{3000 - s['first']['cost'] - s['second']['cost']:g} €")
     st.markdown('[Agriculture et climat — GIEC](' + IPCC_URL + ') · [Empreinte des aliments — ADEME](' + BEEF_URL + ') · [Déforestation — FAO](' + FAO_URL + ')')
     if is_master:
@@ -229,7 +230,7 @@ def reflection_card(note, s, is_master, resume):
 MEAT_FACTORS = {'boeuf': 28, 'boeuf_bresil': 28, 'boeuf_argentine': 28, 'regional': 4.56, 'importe': 4.56, 'porc_ventoux': 6.67}
 
 def choice_footprint(s):
-    import abc_game as engine
+    engine = GAME_ENGINE
     menus = [s[k] for k in ('first', 'second') if s.get(k)]
     if not menus and s.get('preferences'):
         menus = [{'id': k, 'cost': engine.cost(k)} for k in s['preferences']]
@@ -261,7 +262,7 @@ def choice_footprint(s):
         long_term_choices(menus)
 
 def long_term_choices(menus):
-    import abc_game as engine
+    engine = GAME_ENGINE
     total = sum(m['cost'] for m in menus)
     reference = 2 * engine.cost('regional')
     saving = reference - total
