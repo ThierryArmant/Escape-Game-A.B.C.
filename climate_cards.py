@@ -71,7 +71,7 @@ def carbon_comparison():
 def climate_pause(day1, is_master, resume, menus=None):
     st.markdown(STYLE, unsafe_allow_html=True)
     st.subheader('Du plateau au climat · Six cartes pour comprendre')
-    st.write('Votre premier repas est terminé. Lisez les cartes pour comprendre ce que vos choix changent pour le climat. Le maître lancera ensuite la suite.')
+    st.write('Votre premier repas est terminé. Lisez les cartes pour comprendre ce que vos choix changent pour le climat. Le maître du jeu lancera ensuite la suite.')
     definitions = [
         ('farm', '600', 'repas à préparer chaque jour dans votre collège fictif', 'Avant l’assiette, il y a toute une chaîne', 'Cultiver, élever, transporter, conserver et cuisiner demande des ressources. Quand on adapte les commandes aux besoins, on évite de mobiliser des ressources pour des aliments qui finiront jetés.', 'Votre levier : commander selon les besoins réels.', 'Données du scénario A.B.C.', None, 'La photo illustre une récolte ; ce n’est pas votre fournisseur réel.'),
         ('waste', '8 à 10 %', 'des émissions mondiales de gaz à effet de serre', 'Le gaspillage dépasse la poubelle', 'Cette estimation concerne les pertes et le gaspillage alimentaires dans le monde. Produire de la nourriture qui n’est pas mangée mobilise inutilement des ressources et contribue aux émissions.', 'Votre levier : prendre selon sa faim et ajuster les achats.', 'PNUE · Food Waste Index 2024', UNEP_URL, 'Estimation mondiale, pas le pourcentage d’émissions de votre collège. Photo de biodéchets contenant aussi des parties non comestibles.'),
@@ -97,7 +97,7 @@ def climate_pause(day1, is_master, resume, menus=None):
         if st.button('Suivant : adapter le jour 2', type='primary'):
             resume()
     else:
-        st.info('Le maître reprendra la mission après ce temps commun.')
+        st.info('Le maître du jeu reprendra la mission après ce temps commun.')
 
 
 def menu_consequences(s):
@@ -174,7 +174,7 @@ FAO_URL = 'https://www.fao.org/forest-resources-assessment/remote-sensing/remote
 def welcome_cards():
     st.markdown(STYLE, unsafe_allow_html=True)
     st.subheader('Avant de jouer · La cantine commence bien avant le plateau')
-    st.write('Lisez ces quatre fiches pendant que les autres équipes se connectent. Le maître lancera ensuite le jeu. Le chronomètre ne tourne pas encore.')
+    st.write('Lisez ces quatre fiches pendant que les autres équipes se connectent. Le maître du jeu lancera ensuite le jeu. Le chronomètre ne tourne pas encore.')
     a, b, c, d = st.columns(4)
     with a:
         render_photo_card(1, 'farm', 'Cultiver et élever', 'Des activités humaines pour nous nourrir', 'D’où vient notre repas ?', 'Les légumes poussent dans les champs. Les animaux ont besoin de nourriture. Produire demande des sols, de l’eau et de l’énergie ; l’élevage de ruminants émet aussi du méthane, un gaz à effet de serre.', 'À observer : quel plat choisir, et pour combien de convives ?', 'GIEC · Synthèse 2023', IPCC_URL)
@@ -205,7 +205,7 @@ def welcome_cards():
 def reflection_card(note, s, is_master, resume):
     st.markdown(STYLE, unsafe_allow_html=True)
     st.warning('⏸ Pause commune · Le chronomètre est arrêté sur tous les écrans.')
-    st.caption('Décision transmise par : ' + {'manager': 'le chef cuisinier', 'students': 'les élèves', 'supplier': 'le responsable des achats'}.get(note['role'], 'le maître'))
+    st.caption('Décision transmise par : ' + {'manager': 'le chef cuisinier', 'students': 'les élèves', 'supplier': 'le responsable des achats'}.get(note['role'], 'le maître du jeu'))
     render_photo_card(note['number'], note['photo'], 'Une décision → des effets', 'Lire · comprendre · en discuter', note['title'], note['effect'], note['question'], 'A.B.C. · Conséquences du scénario et repères sourcés', None, 'Prix, stocks et restes : simulation. Repères climatiques : sources ci-dessous.')
     if note.get('action') == 'plans':
         menu_climate_cards()
@@ -225,7 +225,7 @@ def reflection_card(note, s, is_master, resume):
         if st.button('Reprendre le jeu pour toutes les équipes', type='primary'):
             resume()
     else:
-        st.info('Lisez la fiche et échangez dans votre équipe. Le maître reprend le jeu lorsque vous êtes prêts.')
+        st.info('Lisez la fiche et échangez dans votre équipe. Le maître du jeu reprend le jeu lorsque vous êtes prêts.')
 
 MEAT_FACTORS = {'boeuf': 28, 'boeuf_bresil': 28, 'boeuf_argentine': 28, 'regional': 4.56, 'importe': 4.56, 'porc_ventoux': 6.67}
 
@@ -416,7 +416,7 @@ def drought_discussion(s):
     st.write('**Offre tentante : des légumes espagnols au repas ?** Comparez économie immédiate, délais, émissions et soutien aux agriculteurs. Acheter oblige-t-il le cuisinier à servir le produit ?')
     abc_chef(s)
     if s.get('crisis_pause'):
-        st.info('Le jeu et son chronomètre sont suspendus. Les menus, les décisions, les mesures et les captures A.B.C. sont conservés. Le maître reprend après les échanges.')
+        st.info('Le jeu et son chronomètre sont suspendus. Les menus, les décisions, les mesures et les captures A.B.C. sont conservés. Le maître du jeu reprend après les échanges.')
     else:
         st.caption('Dossier commun de lecture : les mesures et les captures A.B.C. sont conservées.')
 
