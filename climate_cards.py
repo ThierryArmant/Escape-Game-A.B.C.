@@ -21,15 +21,15 @@ def photo_data(key):
 
 STYLE = '''<style>
 .abc-photo-card{border-radius:14px;overflow:hidden;background:#fff;border:1px solid #dce5d9;box-shadow:0 12px 32px rgba(20,57,43,.09);margin:0 0 12px;color:#183d34}
-.abc-photo-card .visual{height:110px;position:relative;overflow:hidden;background:#d9e6d8}
+.abc-photo-card .visual{height:225px;position:relative;overflow:hidden;background:#d9e6d8}
 .abc-photo-card img{width:100%;height:100%;object-fit:cover;display:block}
 .abc-photo-card .visual:after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(14,35,26,.6))}
 .abc-photo-card .tag{position:absolute;top:16px;left:16px;background:#fff3dc;color:#674923;border-radius:30px;font:700 12px system-ui;padding:8px 12px;z-index:1}
-.abc-photo-card .body{padding:12px 15px}
-.abc-photo-card .figure{font:800 clamp(23px,2.5vw,30px) system-ui;color:#245b48;line-height:1.05;margin:0 0 9px}
+.abc-photo-card .body{padding:20px 24px}
+.abc-photo-card .figure{font:800 clamp(30px,3.4vw,42px) system-ui;color:#245b48;line-height:1.05;margin:0 0 9px}
 .abc-photo-card .unit{font:600 14px system-ui;color:#547466;margin:0 0 9px;line-height:1.5}
-.abc-photo-card h3{font:700 19px system-ui;line-height:1.2;margin:0 0 12px}
-.abc-photo-card p{font:15px/1.35 system-ui;margin:0 0 9px}
+.abc-photo-card h3{font:700 22px system-ui;line-height:1.2;margin:0 0 12px}
+.abc-photo-card p{font:16px/1.5 system-ui;margin:0 0 9px}
 .abc-photo-card .action{background:#edf5e9;border-left:4px solid #568f58;padding:8px 10px;border-radius:8px;font:600 14px/1.35 system-ui}
 .abc-photo-card .source{font:12px/1.6 system-ui;color:#607268;margin-top:8px}
 .abc-photo-card a{color:#356a57;text-decoration:underline}
@@ -173,14 +173,26 @@ FAO_URL = 'https://www.fao.org/forest-resources-assessment/remote-sensing/remote
 def welcome_cards():
     st.markdown(STYLE, unsafe_allow_html=True)
     st.subheader('Avant de jouer · La cantine commence bien avant le plateau')
-    st.write('Lisez ces trois fiches pendant que les autres équipes se connectent. Le maître lancera ensuite le jeu. Le chronomètre ne tourne pas encore.')
-    a, b, c = st.tabs(['1 · Agriculture', '2 · Déforestation', '3 · Du champ au plateau'])
+    st.write('Lisez ces quatre fiches pendant que les autres équipes se connectent. Le maître lancera ensuite le jeu. Le chronomètre ne tourne pas encore.')
+    a, b, c, d = st.tabs(['1 · Agriculture', '2 · Forêts', '3 · Du champ au plateau', '4 · Atmosphère et océans'])
     with a:
         render_photo_card(1, 'farm', 'Cultiver et élever', 'Des activités humaines pour nous nourrir', 'D’où vient notre repas ?', 'Les légumes poussent dans les champs. Les animaux ont besoin de nourriture. Produire demande des sols, de l’eau et de l’énergie ; l’élevage de ruminants émet aussi du méthane, un gaz à effet de serre.', 'À observer : quel plat choisir, et pour combien de convives ?', 'GIEC · Synthèse 2023', IPCC_URL)
     with b:
-        render_photo_card(2, 'cattle', 'Presque 9 sur 10', 'des surfaces déboisées sont liées à l’expansion agricole, à l’échelle mondiale en 2000–2018', 'Quand les champs remplacent les forêts', 'Des forêts peuvent être défrichées pour créer des cultures ou des pâturages. Cela libère du carbone et détruit des habitats. Tous les élevages et toutes les cultures ne proviennent pas de terres récemment déboisées.', 'À demander : sait-on comment le fournisseur protège les forêts ?', 'FAO · Enquête mondiale FRA 2020', FAO_URL, 'Photo illustrative d’un pâturage, pas d’une déforestation.')
+        render_photo_card(2, 'water', 'Un puits de carbone', 'Les forêts captent du CO₂ et stockent du carbone', 'Les arbres, des alliés pour le climat', 'Avec la lumière, les feuilles absorbent du CO₂ et libèrent de l’oxygène : c’est la photosynthèse. Le carbone sert à fabriquer le bois, les feuilles et les racines ; une partie se retrouve dans le sol. Une forêt est un puits de carbone lorsqu’elle absorbe plus de carbone qu’elle n’en libère.', 'Pour la cantine : demander des produits dont la production ne détruit pas les forêts.', 'ONF · Photosynthèse et puits de carbone', 'https://www.onf.fr/onf/+/1ba8::la-foret-un-indispensable-pour-une-planete-decarbonee.html', 'Photo illustrative : végétation sur les rives du Mékong, au Laos.')
+        st.info('Imaginez 10 parts de CO₂ émises par les activités humaines : les plantes et les sols des continents en absorbent environ 3. Les forêts font partie de ce grand puits de carbone terrestre.')
+        st.caption('Repère : 29 % des émissions humaines de CO₂ absorbées par les écosystèmes terrestres en moyenne en 2014–2023, selon le Global Carbon Budget 2024. Ce chiffre concerne l’ensemble des plantes et sols, pas uniquement les forêts.')
+        st.markdown('[Source du repère — Global Carbon Budget 2024](https://globalcarbonbudget.org/gcb-2024/faqs/)')
+        st.write('**Quand une forêt est détruite :** du carbone stocké peut être libéré, et des arbres qui auraient capté du CO₂ disparaissent. Créer des cultures ou des pâturages à sa place peut donc peser sur le climat. La forêt abrite aussi des êtres vivants et participe au cycle de l’eau.')
+        st.caption('« Poumon vert » est une image : les arbres respirent aussi. Le carbone n’est pas éliminé pour toujours ; incendies et décomposition peuvent le remettre dans l’atmosphère. Protéger les forêts accompagne la réduction de nos émissions.')
+
     with c:
         render_photo_card(3, 'waste', 'Du champ au plateau', 'Transporter · conserver · cuisiner · manger', 'Jeter, c’est gaspiller toute cette chaîne', 'Avant la cantine, les aliments ont déjà demandé du travail et des ressources. Le transport et la conservation comptent, mais la distance seule ne suffit pas à classer les aliments selon leur impact climatique.', 'À observer : peut-on prendre à sa faim et éviter les achats inutiles ?', 'ADEME · Impact CO₂ / PNUE', BEEF_URL, 'Les photos sont illustratives ; fiches A.B.C. originales.')
+    with d:
+        render_photo_card(4, 'industry', 'Sur 10 parts de CO₂', '≈ 3 vers les terres · ≈ 2 à 3 vers les océans · ≈ 4 à 5 restent dans l’air', 'Où va le CO₂ que nous émettons ?', 'L’atmosphère est l’enveloppe d’air autour de la Terre. Son effet de serre naturel garde une température permettant la vie. Nos émissions supplémentaires renforcent cet effet de serre. Les plantes et les océans absorbent une partie du CO₂ ; le reste s’accumule dans l’air et contribue au réchauffement.', 'Réduire nos émissions et protéger les puits de carbone sont deux actions complémentaires.', 'Global Carbon Budget 2024 · moyenne 2014–2023', 'https://globalcarbonbudget.org/gcb-2024/faqs/', '29 % vers le puits terrestre, 26 % vers le puits océanique, environ 45 % restant dans l’atmosphère. Parts du CO₂ émis, pas de tous les gaz à effet de serre. Photo illustrative d’une centrale ; le panache visible n’est pas une mesure du CO₂.')
+        st.write('**Photosynthèse :** avec la lumière, les plantes absorbent du CO₂ pour fabriquer leur matière et libèrent de l’oxygène. Les arbres ne sont pas seuls : les autres plantes et le phytoplancton des océans font aussi de la photosynthèse.')
+        st.write('**Océans :** le CO₂ se dissout dans l’eau. Les échanges et la circulation océanique participent à son stockage ; les organismes marins interviennent aussi dans le cycle du carbone. L’absorption de CO₂ contribue à l’acidification des océans : cette aide au climat a des conséquences sur la vie marine.')
+        st.caption('Un puits de carbone absorbe davantage de carbone qu’il n’en libère. Ces parts sont des moyennes sur une période précise : elles changent d’une année à l’autre. Elles ne signifient pas que chaque repas est automatiquement compensé.')
+        st.markdown('[Océans et acidification — NOAA](https://www.noaa.gov/education/resource-collections/ocean-coasts/ocean-acidification)')
     st.info('Chef : préparer deux menus. Élèves : exprimer vos envies. Courtier : consulter vos offres, puis répondre aux demandes. Les choix sont proposés par le jeu : aucun calcul à saisir.')
 
 def reflection_card(note, s, is_master, resume):
