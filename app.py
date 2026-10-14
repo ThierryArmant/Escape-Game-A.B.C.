@@ -85,7 +85,7 @@ if 'auth' not in st.session_state:
 if 'auth' not in st.session_state:
     a, b = st.columns(2)
     with a:
-        st.subheader('Écran maître')
+        st.subheader('Écran du maître du jeu')
         st.write('Créez une partie, puis communiquez son code aux trois équipes.')
         if st.button('Créer une partie', type='primary'):
             try:
@@ -150,16 +150,16 @@ def act(action, **values):
 def mission(role, s):
     phase = s['phase']
     if not s.get('game_started', True):
-        return 'Avant le départ', 'Lisez les trois fiches. Le maître lance le jeu lorsque les équipes sont installées.'
+        return 'Avant le départ', 'Lisez les trois fiches. Le maître du jeu lance le jeu lorsque les équipes sont installées.'
     if s.get('reflection'):
-        return 'Pause de réflexion', 'Une équipe vient de décider. Lisez la conséquence ; le maître reprend ensuite le jeu.'
+        return 'Pause de réflexion', 'Une équipe vient de décider. Lisez la conséquence ; le maître du jeu reprend ensuite le jeu.'
     if phase == 1 and not s['first'] and role == 'students':
         return 'Choisir vos deux menus souhaités', 'Proposez deux repas du catalogue. Le chef et le responsable des achats verront votre demande.'
     if phase == 1 and role == 'manager' and not s['first']:
         return 'Préparer vos deux menus', 'Vous pouvez commencer avec les prix de référence. Le choix du responsable des achats actualisera ensuite les prix.'
     menu = (s['first'] if phase == 1 and s['second'] else s['second'] if phase == 3 and s['reviewed'] else None) if phase in (1, 3) else None
     if phase == 3 and not s['climate_ack']:
-        return 'Pause commune : comprendre le climat', 'Lisez les six cartes après le premier repas. Le maître reprendra ensuite la mission du jour 2.'
+        return 'Pause commune : comprendre le climat', 'Lisez les six cartes après le premier repas. Le maître du jeu reprendra ensuite la mission du jour 2.'
     if phase == 1 and s['first'] and s['second'] and s['first']['cost'] + s['second']['cost'] > 3000:
         return ('Revoir votre prévision', 'Ces deux menus dépassent le budget : ouvrez la modification et essayez une autre combinaison.') if role == 'manager' else ('Budget insuffisant', 'Le chef doit modifier les menus avant la commande. Le total et le déficit sont affichés sur les écrans.')
     if phase == 5:
@@ -171,8 +171,8 @@ def mission(role, s):
             if not menu:
                 return 'Attendre les deux menus' if phase == 1 else 'Attendre la révision du jour 2', 'Le chef prépare les deux repas à l’avance, puis réexamine le deuxième après les restes du premier service.'
             pending = [ROLES[r] for r in ('supplier', 'students') if not s['approvals'][r]]
-            return ('Missions encore en cours', 'Attendez : ' + ', '.join(pending) + '.') if pending else ('Prêts pour la suite', 'Les trois équipes ont terminé. Le maître peut cliquer sur « Suivant ».')
-        return ('Bilan pris en compte', 'Le maître peut cliquer sur « Suivant ».') if s['waste_reviewed'] else ('Les élèves choisissent, le chef consulte les pertes', 'Les résultats se calculent automatiquement. Le chef doit lire le bilan puis confirmer qu’il l’a pris en compte.')
+            return ('Missions encore en cours', 'Attendez : ' + ', '.join(pending) + '.') if pending else ('Prêts pour la suite', 'Les trois équipes ont terminé. Le maître du jeu peut cliquer sur « Suivant ».')
+        return ('Bilan pris en compte', 'Le maître du jeu peut cliquer sur « Suivant ».') if s['waste_reviewed'] else ('Les élèves choisissent, le chef consulte les pertes', 'Les résultats se calculent automatiquement. Le chef doit lire le bilan puis confirmer qu’il l’a pris en compte.')
     if phase in (1, 3):
         if role == 'supplier':
             if not s['production']:
@@ -180,7 +180,7 @@ def mission(role, s):
             if not menu:
                 return 'Préparer les deux livraisons', 'Attendez les deux menus du chef ; entre les deux jours, attendez sa confirmation ou sa modification du menu du lendemain.'
             if s['approvals']['supplier']:
-                return 'Livraison confirmée', 'Votre vérification est terminée. Attendez la validation des élèves et la suite donnée par le maître.'
+                return 'Livraison confirmée', 'Votre vérification est terminée. Attendez la validation des élèves et la suite donnée par le maître du jeu.'
             if not s['harvest_done']:
                 return 'Combien pouvez-vous fournir ?', 'Calculez les kilogrammes disponibles : nombre de parcelles ou caisses × kilogrammes de chacune. Une question à la fois, avec aide et calculatrice.'
             if not s['supply_done']:
@@ -194,17 +194,17 @@ def mission(role, s):
             if not menu:
                 return ('Préparer les deux repas', 'Choisissez le menu du jour 1 et celui du jour 2 : variez les plats et vérifiez le budget total, puis envoyez les deux commandes.') if phase == 1 else ('Revoir le menu du jour 2', 'Comparez le menu prévu avec les restes du jour 1, le stock utilisable et l’alerte. Confirmez ou modifiez ce menu pour lancer la nouvelle vérification du responsable des achats.')
             pending = [ROLES[r] for r in ('supplier', 'students') if not s['approvals'][r]]
-            return ('Menu enregistré', 'Votre budget est calculé. Attendez : ' + ', '.join(pending) + '.') if pending else ('Commande validée', 'Tous ont donné leur accord. Le maître peut cliquer sur « Suivant ».')
+            return ('Menu enregistré', 'Votre budget est calculé. Attendez : ' + ', '.join(pending) + '.') if pending else ('Commande validée', 'Tous ont donné leur accord. Le maître du jeu peut cliquer sur « Suivant ».')
         if not menu:
             return 'Attendre le menu', 'Le chef cuisinier va préparer les deux repas. Il apparaîtra ici ; vous pourrez alors donner votre avis.'
-        return ('Votre avis est enregistré', 'Attendez la fin de la mission du responsable des achats et la suite donnée par le maître.') if s['approvals']['students'] else ('Donner l’avis des convives', 'Lisez le menu, imaginez votre plateau et échangez dans votre équipe. Validez le repas proposé, ou demandez un changement au chef cuisinier avant de valider.')
+        return ('Votre avis est enregistré', 'Attendez la fin de la mission du responsable des achats et la suite donnée par le maître du jeu.') if s['approvals']['students'] else ('Donner l’avis des convives', 'Lisez le menu, imaginez votre plateau et échangez dans votre équipe. Validez le repas proposé, ou demandez un changement au chef cuisinier avant de valider.')
     if role == 'students':
         return ('Vos choix de cantine sont enregistrés', 'Les restes simulés et leur coût sont calculés. Le chef lit le bilan avant la suite.') if s['service'] else ('Comme à la cantine', 'Choisissez comment demander votre plat selon votre faim, puis comment prendre entrée et dessert en libre-service. Lisez les explications avant de choisir.')
     if role == 'manager':
         if not s['service']:
             return 'Attendre les choix des convives', 'Les élèves choisissent les portions et le libre-service. Le bilan des restes s’affichera automatiquement.'
         if s['waste_reviewed']:
-            return 'Pertes prises en compte', 'Le maître peut cliquer sur « Suivant ». Vous réexaminerez le menu du jour 2 après le premier service.'
+            return 'Pertes prises en compte', 'Le maître du jeu peut cliquer sur « Suivant ». Vous réexaminerez le menu du jour 2 après le premier service.'
         return 'Lire les résultats du service', 'Les kilogrammes, grammes par élève, pourcentage et pertes en euros sont calculés. Lisez-les, puis cliquez sur « J’ai pris en compte les pertes ».'
     return 'Préparer le prochain repas', 'Votre commande a été vérifiée. Regardez les choix des convives et la mesure du gaspillage ; vous recalculerez votre offre à la manche suivante.'
 
@@ -394,7 +394,7 @@ def menu_picker(s):
             adaptation = st.radio('Pour mieux satisfaire les convives demain', ['Préparer autrement le stock cru utilisable : soupe ou légumes rôtis', 'Choisir une autre recette et acheter les ingrédients manquants', 'Présenter le plat et proposer de goûter', 'Prévoir des portions selon la faim et un complément', 'Conserver le service prévu'])
         if st.form_submit_button('Proposer ce menu', type='primary'):
             act('menu', value=choice, reuse=reuse, adaptation=adaptation if phase == 3 else None)
-    st.caption('Après votre proposition : le responsable des achats vérifie sa récolte ; les élèves donnent leur avis ; le maître lance la suite.')
+    st.caption('Après votre proposition : le responsable des achats vérifie sa récolte ; les élèves donnent leur avis ; le maître du jeu lance la suite.')
 
 def students_panel(s):
     phase = s['phase']
@@ -553,7 +553,7 @@ def game():
         if role == 'master' and st.button('Reprendre le jeu après les discussions', type='primary'):
             act('crisis_resume')
         elif role != 'master':
-            st.info('Discussion commune : le maître débloquera le jeu.')
+            st.info('Discussion commune : le maître du jeu débloquera le jeu.')
         return
     if s.get('reflection'):
         cards.reflection_card(s['reflection'], s, role == 'master', lambda: act('resume_reflection'))
@@ -630,7 +630,7 @@ def game():
         if s.get('final_card_visible'):
             final_debate(s, role, act)
         elif role != 'master':
-            st.info('Le maître va afficher la dernière carte des équivalents CO₂e pour le débat commun.')
+            st.info('Le maître du jeu va afficher la dernière carte des équivalents CO₂e pour le débat commun.')
     with st.expander('Voir les décisions des trois équipes', expanded=role == 'master'):
         st.write('Offre légumes : ' + (PRODUCTION[s['production']]['name'] if s['production'] else 'À choisir'))
         for k, label in [('first', 'Premier repas'), ('second', 'Prochain repas')]:
