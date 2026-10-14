@@ -1,24 +1,30 @@
 import time
 import streamlit as st
-from climate_cards import climate_pause, menu_consequences, sourcing_card, NUTRITION_URL
-import importlib
+import importlib.util
+from pathlib import Path
+
+def isolated_module(filename, revision):
+    # Build a separate module namespace. Never reload a module used by another tablet.
+    spec = importlib.util.spec_from_file_location('_abc_' + filename.replace('.', '_') + '_' + revision.replace('-', '_'), Path(__file__).with_name(filename))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 @st.cache_resource
 def load_cards(revision):
-    import climate_cards
-    return importlib.reload(climate_cards)
-
-cards = load_cards('abc-cartes-kilometres-v21')
-climate_pause, menu_consequences, sourcing_card = cards.climate_pause, cards.menu_consequences, cards.sourcing_card
-final_debate = cards.final_debate
+    return isolated_module('climate_cards.py', revision)
 
 @st.cache_resource
 def load_engine(revision):
-    # Streamlit peut relancer app.py sans recharger les modules importés.
-    import abc_game
-    return importlib.reload(abc_game)
+    return isolated_module('abc_game.py', revision)
 
-engine = load_engine('cantine-v4-grouped-first-effect')
+cards = load_cards('abc-cartes-kilometres-v22-safe')
+engine = load_engine('cantine-v4-grouped-first-effect-safe')
+cards.GAME_ENGINE = engine
+climate_pause, menu_consequences, sourcing_card = cards.climate_pause, cards.menu_consequences, cards.sourcing_card
+final_debate = cards.final_debate
+NUTRITION_URL = cards.NUTRITION_URL
+
 Store, MENUS, SERVICES, ROLES = engine.Store, engine.MENUS, engine.SERVICES, engine.ROLES
 PRODUCTION, SERVICE_LABELS, SELF_SERVICE = engine.PRODUCTION, engine.SERVICE_LABELS, engine.SELF_SERVICE
 cost, harvest, waste, stock_saving = engine.cost, engine.harvest, engine.waste, engine.stock_saving
@@ -463,6 +469,58 @@ def service_picker():
     if st.button('Enregistrer nos choix de cantine', type='primary'):
         act('service', value=choice, self_service=free)
 
+def master_projection(s):
+    st.subheader('Écran central · Les trois équipes')
+    view = st.radio('Affichage à projeter', ['Les trois équipes', 'Familles et élèves', 'Chef cuisinier', 'Responsable des achats'], horizontal=True, key='master_projection')
+    roles = ['students', 'manager', 'supplier'] if view == 'Les trois équipes' else [next(r for r in ('students', 'manager', 'supplier') if ROLES[r] == view)]
+    for column, role in zip(st.columns(len(roles)), roles):
+        with column:
+            with st.container(border=True):
+                st.markdown('### ' + {'students': '🍽️ ', 'manager': '👨‍🍳 ', 'supplier': '🛒 '}[role] + ROLES[role])
+                if role == 'students':
+                    if s.get('preferences'):
+                        for index, menu in enumerate(s['preferences'], 1):
+                            st.write(f'Souhait jour {index} : ' + MENUS[menu][0])
+                    else:
+                        st.info('Choix des menus attendus.')
+                    if s['service']:
+                        st.write('Plat : ' + SERVICE_LABELS[s['service']])
+                        st.write('Libre-service : ' + SELF_SERVICE[s['self_service']][0])
+                        service_time(s)
+                    st.caption('Avis sur les menus : ' + ('validé' if s['approvals']['students'] else 'en cours'))
+                elif role == 'manager':
+                    for field, day in [('first', 1), ('second', 2)]:
+                        if s[field]:
+                            st.write(f'Jour {day} : ' + MENUS[s[field]['id']][0])
+                            st.caption(f"Coût : {s[field]['cost']:g} €")
+                    if not s['first']:
+                        st.info('Deux menus à préparer.')
+                    if waste(s) is not None:
+                        st.metric('Restes simulés', f'{waste(s)} kg')
+                        st.caption('Bilan lu : ' + ('oui' if s['waste_reviewed'] else 'pas encore'))
+                else:
+                    if s['production']:
+                        st.write(PRODUCTION[s['production']]['name'])
+                        st.write('Poulet : ' + ('régional' if s['meat_source'] == 'regional' else 'importé'))
+                        st.write('Autre offre : ' + MENUS[s['animal_offer']][0])
+                    else:
+                        st.info('Tarifs et fournisseurs à choisir.')
+                    st.caption('Livraison : ' + ('confirmée' if s['approvals']['supplier'] else 'en cours'))
+                    policy = s.get('waste_policy', {}).get(str(s['phase']))
+                    if policy:
+                        st.write('Biodéchets : ' + policy)
+    if len(roles) == 1:
+        if roles[0] == 'students':
+            cards.abc_observations()
+        elif roles[0] == 'manager':
+            cards.chef_nutrition(s)
+            cards.abc_chef(s)
+        else:
+            cards.purchase_posters()
+            if s['first'] and s['second']:
+                cards.choice_footprint(s)
+    st.caption('Vue de projection en lecture seule, mise à jour automatiquement. Les équipes décident sur leur propre écran.')
+
 @st.fragment(run_every='2s')
 def game():
     try:
@@ -471,6 +529,8 @@ def game():
         st.error(str(exc))
         return
     role, phase = auth['role'], s['phase']
+    if role == 'master' and s.get('game_started', True) and not s.get('reflection'):
+        master_projection(s)
     seconds = max(0, 1800 - int(engine.elapsed(s)))
     st.caption(f'Temps de jeu actif : {seconds // 60} min {seconds % 60:02d} s · Les pauses de lecture ne sont pas décomptées.')
     if not s.get('game_started', True):
