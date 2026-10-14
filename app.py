@@ -108,6 +108,18 @@ if auth['role'] != 'master':
     with st.expander('Point de retour de mon équipe'):
         st.write('Cette adresse vous reconnecte à la même partie. En cas de fermeture ou d’actualisation, rouvrez-la : vos choix restent enregistrés tant que la partie est disponible.')
         st.link_button('Ouvrir le lien de retour', 'https://escape-game-abc-cantine.streamlit.app/?partie=' + auth['code'] + '&equipe=' + auth['role'])
+    with st.expander('Corriger le rôle de cette tablette'):
+        st.caption('À utiliser avec le maître du jeu si deux tablettes ont rejoint la même équipe. La partie et les choix des autres équipes sont conservés.')
+        role_options = ['students', 'manager', 'supplier']
+        corrected_role = st.selectbox('Cette tablette doit rejoindre', role_options, index=role_options.index(auth['role']), format_func=ROLES.get, key='correct_team_role')
+        if st.button('Rejoindre la bonne équipe sans recommencer', disabled=corrected_role == auth['role']):
+            st.session_state.auth = store.join(auth['code'], corrected_role)
+            st.query_params.from_dict({'partie': auth['code'], 'equipe': corrected_role})
+            st.session_state.pop('mission_context', None)
+            st.session_state.pop('mission_pending', None)
+            st.session_state.pop('abc_error', None)
+            st.rerun()
+
 st.info(f"{ROLES[auth['role']]} · Code : {auth['code']}")
 if auth['role'] == 'master':
     if st.button('Arrêter et remettre la partie à zéro'):
