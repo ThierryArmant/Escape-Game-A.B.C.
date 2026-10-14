@@ -303,15 +303,15 @@ def abc_observations():
 def abc_chef(s):
     st.subheader('Le chef s’appuie sur les rejets A.B.C.')
     st.table([
-        {'Aliment observé': 'Tomates', 'Rejet moyen dans les scans': '35 %', 'Motifs à examiner': '30 portions observées'},
-        {'Aliment observé': 'Paupiette', 'Rejet moyen dans les scans': '33 %', 'Motifs à examiner': '7 « pas aimé » ; 6 « pas le temps » sur 30 portions'},
-        {'Aliment observé': 'Chou-fleur en gratin', 'Rejet moyen dans les scans': '74 %', 'Motifs à examiner': '7 « pas aimé » ; 4 « pas le temps » sur 14 portions'},
-        {'Aliment observé': 'Pommes noisettes', 'Rejet moyen dans les scans': '13 %', 'Motifs à examiner': '16 portions observées'},
-        {'Aliment observé': 'Tiramisu', 'Rejet moyen dans les scans': '23 %', 'Motifs à examiner': '20 portions observées'},
-        {'Aliment observé': 'Pain', 'Rejet moyen dans les scans': '40 %', 'Motifs à examiner': '35 portions observées sur deux jours'},
+        {'Aliment': 'Tomates', 'Portions observées': 30, 'Mangé': '65 %', 'Laissé': '35 %', 'Avis disponibles': 'Non renseignés ici'},
+        {'Aliment': 'Paupiette', 'Portions observées': 30, 'Mangé': '67 %', 'Laissé': '33 %', 'Avis disponibles': '7 « pas aimé » ; 6 « pas le temps »'},
+        {'Aliment': 'Chou-fleur en gratin, béchamel', 'Portions observées': 14, 'Mangé': '26 %', 'Laissé': '74 %', 'Avis disponibles': '7 « pas aimé » ; 4 « pas le temps »'},
+        {'Aliment': 'Pommes noisettes', 'Portions observées': 16, 'Mangé': '87 %', 'Laissé': '13 %', 'Avis disponibles': 'Non renseignés ici'},
+        {'Aliment': 'Tiramisu', 'Portions observées': 20, 'Mangé': '77 %', 'Laissé': '23 %', 'Avis disponibles': 'Non renseignés ici'},
+        {'Aliment': 'Pain', 'Portions observées': 35, 'Mangé': '60 %', 'Laissé': '40 %', 'Avis disponibles': 'Observations sur deux jours'},
     ])
     st.write('Le chou-fleur a été moins mangé que les pommes noisettes dans cet échantillon. Pour demain, comparez les possibilités : changer la préparation, proposer de goûter, adapter les portions et garder du temps à table. Ne supprimez pas les légumes uniquement parce qu’ils sont moins appréciés.')
-    st.caption('Ces chiffres viennent des scans A.B.C. du 1er octobre 2026 au collège J. Giono. Ils ne prouvent pas à eux seuls pourquoi un aliment a été laissé ; plusieurs causes peuvent se combiner.')
+    st.caption('Ces chiffres viennent des scans A.B.C. du collège J. Giono, notamment le 1er octobre 2026 ; le pain couvre deux jours. Ils ne prouvent pas à eux seuls pourquoi un aliment a été laissé ; plusieurs causes peuvent se combiner.')
     if any(s.get(k) and s[k]['id'] == 'abc_cantine' for k in ('first', 'second')):
         st.info('Menu A.B.C. du jeu : prix fictif de 1 380 € pour 600 repas. Quantités hypothétiques : 72 kg de paupiettes préparées, 90 kg de gratin et 120 kg de pommes noisettes. Avec les taux de rejet observés, le scénario de portion unique prévoit environ 106 kg de restes. Les autres organisations simulent une réduction ; cette efficacité n’a pas été mesurée au collège.')
 
@@ -397,3 +397,71 @@ def menu_climate_cards():
             render_photo_card(index, *args)
     st.info('Produire inutilement ajoute des émissions et une pression sur les ressources. Cela contribue au problème climatique à grande échelle ; les restes de ce repas ne provoquent pas directement la sécheresse du jeu.')
     st.caption('Cartes A.B.C. originales : aucune reproduction des textes ou visuels de La Fresque du Climat.')
+
+
+def drought_discussion(s):
+    st.subheader('🌵 Catastrophe climatique · Vague de sécheresse')
+    st.warning('Dans notre scénario, le dérèglement climatique lié au renforcement de l’effet de serre a favorisé une très longue sécheresse. Les agriculteurs touchés ont perdu leur récolte de tomates ; leurs dépenses étaient déjà engagées.')
+    poster = Path(__file__).parent / 'assets' / 'cards' / 'secheresse-chef.jpg'
+    if poster.exists():
+        st.image(str(poster), width='stretch')
+    else:
+        st.image(str(PHOTO_ROOT / 'drought.jpg'), width='stretch')
+    st.table([
+        {'Production': 'Tomate provençale de saison, sans serre chauffée', 'Avant la crise (€/kg)': '2,50', 'Après la crise (€/kg)': '6,00 · stock régional de remplacement limité', 'Indice CO₂e du scénario': '1'},
+        {'Production': 'Tomate espagnole de saison, sans serre chauffée, camion', 'Avant la crise (€/kg)': '—', 'Après la crise (€/kg)': '1,50 · offre promotionnelle', 'Indice CO₂e du scénario': '2'},
+        {'Production': 'Tomate argentine de saison, bateau et camion', 'Avant la crise (€/kg)': '—', 'Après la crise (€/kg)': '1,20 · offre promotionnelle', 'Indice CO₂e du scénario': '3'},
+    ])
+    st.caption('Prix et indices entièrement fictifs pour le débat : aucun de ces indices n’est une mesure ADEME ni une valeur en kg CO₂e. La saison, la culture, le chauffage des serres et le transport comptent ; la provenance seule ne classe pas les empreintes. Le stock espagnol n’est pas supposé touché par cette sécheresse locale.')
+    st.write('**Offre tentante : des légumes espagnols au repas ?** Comparez économie immédiate, délais, émissions et soutien aux agriculteurs. Acheter oblige-t-il le cuisinier à servir le produit ?')
+    abc_chef(s)
+    if s.get('crisis_pause'):
+        st.info('Le jeu et son chronomètre sont suspendus. Les menus, les décisions, les mesures et les captures A.B.C. sont conservés. Le maître reprend après les échanges.')
+    else:
+        st.caption('Dossier commun de lecture : les mesures et les captures A.B.C. sont conservées.')
+
+
+def drought_offers(s, act):
+    st.subheader('🛒 Négociateur · Des prix qui bouleversent la commande')
+    st.write('Le fournisseur local a perdu ses tomates. Un stock régional de remplacement coûte 6 €/kg contre 2,50 €/kg auparavant. Voici deux offres tentantes pour 90 kg :')
+    st.table([
+        {'Offre fictive': 'Espagne · tomates de saison', 'Prix €/kg': 1.50, 'Total €': 135, 'Délai': 'J+1 · disponible pour demain'},
+        {'Offre fictive': 'Argentine · tomates de saison', 'Prix €/kg': 1.20, 'Total €': 108, 'Délai': 'J+2 · indisponible pour demain ; stock pour plus tard'},
+        {'Offre fictive': 'Ne pas acheter de tomate', 'Prix €/kg': '—', 'Total €': 0, 'Délai': 'Adapter le menu avec le stock cru'},
+    ])
+    st.caption('Les offres sont fictives. Les tomates achetées seront payées et resteront en stock : le chef doit préparer une recette sans tomate. Les 90 kg de chou-fleur cru constituent un stock fictif distinct des plateaux A.B.C.')
+    labels = {'espagne': 'Offre espagnole · 135 €', 'argentine': 'Offre argentine · 108 € · pour plus tard', 'reserve': 'Ne pas acheter de tomate · adapter le menu'}
+    if s.get('crisis_recipe'):
+        st.success('Offre retenue : ' + labels[s['crisis_offer']])
+        return
+    offer = st.radio('Votre décision d’achat', list(labels), format_func=labels.get, key='drought_offer')
+    if st.button('Enregistrer cette décision d’achat', type='primary'):
+        act('crisis_offer', value=offer)
+    if s.get('crisis_offer'):
+        st.success('Décision transmise au chef : ' + labels[s['crisis_offer']])
+
+
+def drought_chef(s, act):
+    st.subheader('👨‍🍳 Chef · Revoir la recette sans tomate')
+    abc_chef(s)
+    st.markdown('**Tableau détaillé de la capture A.B.C. · Chou-fleur**')
+    st.table([
+        {'Avis dans A.B.C.': 'Pas aimé', 'Portions': 7, 'Part mangée moyenne': '4 %'},
+        {'Avis dans A.B.C.': 'Pas le temps', 'Portions': 4, 'Part mangée moyenne': '40 %'},
+        {'Avis dans A.B.C.': 'Tout fini', 'Portions': 3, 'Part mangée moyenne': '58 %'},
+    ])
+    st.caption('Transcription de la capture : les déclarations et les estimations visuelles peuvent différer. 14 portions, 26 % mangé en moyenne ; ne pas généraliser à toute la cantine.')
+    st.write('Vous avez 90 kg de chou-fleur cru non servi dans le scénario. Il faut le transformer, conserver des légumes et varier le repas. Même si les achats ont retenu des tomates espagnoles, cette recette doit être sans tomate : elles restent en stock pour un autre service.')
+    recipes = GAME_ENGINE.CRISIS_RECIPES
+    purchase = {'espagne': 135, 'argentine': 108, 'reserve': 0}.get(s.get('crisis_offer'), 0)
+    steps = {'chou_veloute': 'Cuire puis mixer avec de l’eau et des aromates ; servir les lentilles et le pain à côté.', 'chou_puree': 'Cuire le chou-fleur et les pommes de terre, écraser ensemble ; accompagner de poulet.', 'chou_galettes': 'Cuire et hacher le chou-fleur, mélanger aux lentilles cuites et former des galettes ; accompagner de riz.'}
+    st.table([{'Recette sans tomate': name, 'Préparation': steps[key], 'Coût complet fictif · 600 repas (€)': price, 'Tomates payées en stock (€)': purchase, 'Budget restant · 2 jours (€)': 3000 - s['first']['cost'] - price - purchase} for key, (name, price) in recipes.items()])
+    st.caption('Prix fictifs incluant le stock de chou-fleur, la base du repas et les ingrédients. 600 repas ; budget alimentaire total 3 000 €. Recettes indicatives : vérifier temps de préparation, matériel, allergènes et équilibre du menu complet. Aucun meilleur taux de consommation n’est garanti.')
+    if not s.get('crisis_offer'):
+        st.info('Le négociateur doit d’abord enregistrer sa décision.')
+        return
+    choice = st.radio('Comment transformer le chou-fleur ?', list(recipes), format_func=lambda k: recipes[k][0], key='drought_recipe')
+    if st.button('Envoyer cette recette et son coût aux équipes', type='primary'):
+        act('crisis_recipe', value=choice)
+    if s.get('crisis_recipe'):
+        st.success('Recette envoyée. Le négociateur confirme la livraison ; les élèves donnent leur avis.')

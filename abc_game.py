@@ -16,6 +16,9 @@ MENUS = {
     'vegetal': ('Lentilles, riz, carottes', 918),
     'secours': ('Lentilles, riz de réserve, légumes surgelés', 900),
 }
+CRISIS_RECIPES = {'chou_veloute': ('Velouté de chou-fleur, lentilles et pain', 960), 'chou_puree': ('Poulet, purée chou-fleur et pommes de terre', 1260), 'chou_galettes': ('Galettes de chou-fleur et lentilles, riz', 1020)}
+MENUS.update(CRISIS_RECIPES)
+
 SERVICES = {'unique': ('Portion unique', 60), 'adapte': ('Petite portion et complément', 36), 'explique': ('Portion adaptée et recette présentée', 24)}
 ROLES = {'master': 'Maître du jeu', 'students': 'Familles et élèves', 'manager': 'Chef cuisinier', 'supplier': 'Responsable des achats'}
 
@@ -31,6 +34,8 @@ SERVICE_LABELS = {'unique': 'Même portion de plat pour tous', 'adapte': 'Plat s
 SELF_SERVICE = {'tout': ('Prendre entrée et dessert systématiquement', 0), 'faim': ('Choisir entrée et dessert selon sa faim', -6), 'gouter': ('Goûter une petite quantité avant de choisir', -12)}
 
 def cost(menu, event=None, mode='conventionnel', reuse=False, beef_source='regional'):
+    if menu in CRISIS_RECIPES and mode in PRODUCTION:
+        return CRISIS_RECIPES[menu][1]
     if menu not in MENUS or mode not in PRODUCTION:
         raise ValueError('Choix inconnu.')
     if event == 'inondation' and menu != 'secours':
@@ -50,6 +55,8 @@ def stock_saving(menu, event, mode):
     return 9 * PRODUCTION[mode]['carrot_price']
 
 def harvest(s):
+    if s.get('crisis_recipe') and s['phase'] == 3:
+        return {'name': 'Chou-fleur cru non servi en stock', 'plots': 6, 'yield': 15, 'quantity': 90, 'unit': 'caisses', 'need': 90}
     selected = [s.get('first'), s.get('second')] if s['phase'] == 1 else [s.get('second')]
     abc_count = sum(bool(m and m['id'] == 'abc_cantine') for m in selected)
     if abc_count:
@@ -74,6 +81,12 @@ def requirements(s):
         if not menu:
             continue
         m = menu['id']
+        if m in CRISIS_RECIPES:
+            quantities.setdefault('Chou-fleur cru du stock non servi', 0)
+            quantities['Chou-fleur cru du stock non servi'] += 90
+            quantities['Poulet' if m == 'chou_puree' else 'Lentilles sèches'] += 72 if m == 'chou_puree' else 36
+            quantities['Pommes de terre' if m == 'chou_puree' else 'Riz sec'] += 120 if m == 'chou_puree' else 36
+            continue
         if m == 'abc_cantine':
             quantities['Paupiettes préparées'] += 72
             quantities['Chou-fleur en gratin'] += 90
@@ -109,7 +122,7 @@ def waste(s):
     return max(0, simulated + SELF_SERVICE[s.get('self_service', 'tout')][1])
 
 def initial():
-    return dict(first_effect_shown=False, waste_policy={}, game_started=False, active_elapsed=0, active_since=None, reflection=None, notices=[], preferences=None, final_card_visible=False, debate_votes={}, debate_decision=None, waste_reviewed=False, climate_ack=False, animal_offer='boeuf', beef_source='regional', meat_source=None, original_second=None, reviewed=False, day1=None, day2=None, phase=1, event=None, started=time.time(), hint=False, first=None, second=None, service=None, self_service='tout', measure=False, grams_done=False, production=None, harvest_done=False, supply_done=False, supply_strategy=None, approvals={'supplier': False, 'students': False})
+    return dict(crisis_pause=False, crisis_offer=None, crisis_recipe=None, first_effect_shown=False, waste_policy={}, game_started=False, active_elapsed=0, active_since=None, reflection=None, notices=[], preferences=None, final_card_visible=False, debate_votes={}, debate_decision=None, waste_reviewed=False, climate_ack=False, animal_offer='boeuf', beef_source='regional', meat_source=None, original_second=None, reviewed=False, day1=None, day2=None, phase=1, event=None, started=time.time(), hint=False, first=None, second=None, service=None, self_service='tout', measure=False, grams_done=False, production=None, harvest_done=False, supply_done=False, supply_strategy=None, approvals={'supplier': False, 'students': False})
 
 def reset_supply(s):
     ready = bool(s['first'] and s['second']) and (s['phase'] == 1 or s['reviewed'])
@@ -121,11 +134,16 @@ def apply_core(s, role, action, **values):
     if role == 'master':
         if action == 'event':
             event = values.get('value')
-            if event not in ('secheresse', 'inondation') or s['event'] or s['phase'] == 5:
+            if event not in ('secheresse', 'inondation') or s['event'] or s['phase'] not in (1, 2, 3):
                 raise ValueError('Un seul aléa par partie.')
-            s.update(event=event, reviewed=False)
+            s['active_elapsed'] = elapsed(s)
+            s.update(event=event, reviewed=False, crisis_pause=True, active_since=None)
             if s['phase'] == 3:
                 reset_supply(s)
+        elif action == 'crisis_resume':
+            if not s.get('crisis_pause'):
+                raise ValueError('Aucune discussion climatique en cours.')
+            s.update(crisis_pause=False, active_since=time.time())
         elif action == 'climate_resume':
             if s['phase'] != 3:
                 raise ValueError('La pause apparaît après le premier repas.')
@@ -158,7 +176,6 @@ def apply_core(s, role, action, **values):
             s['phase'] = min(5, p + 1)
             s['hint'] = False
             if s['phase'] == 3:
-                s['event'] = 'secheresse'
                 s['climate_ack'] = False
                 reset_supply(s)
                 s['reviewed'] = False
@@ -307,8 +324,34 @@ def apply(s, role, action, **values):
         return
     if not s.get('game_started', True):
         raise ValueError('Le maître lancera la partie après la lecture des fiches.')
+    if s.get('crisis_pause') and not (role == 'master' and action == 'crisis_resume'):
+        raise ValueError('Discussion climatique : seul le maître peut reprendre le jeu.')
     if s.get('reflection'):
         raise ValueError('Pause de lecture : le maître reprend ensuite le jeu.')
+    if action == 'crisis_offer' and role == 'supplier' and s['phase'] == 3 and s['event'] == 'secheresse':
+        if values.get('value') not in ('espagne', 'argentine', 'reserve') or s.get('crisis_recipe'):
+            raise ValueError('Choisissez une offre avant la recette du chef.')
+        s['crisis_offer'] = values['value']
+        s['reviewed'] = False
+        reset_supply(s)
+        return
+    if action == 'crisis_recipe' and role == 'manager' and s['phase'] == 3 and s['event'] == 'secheresse':
+        recipe = values.get('value')
+        if recipe not in CRISIS_RECIPES or not s.get('crisis_offer') or not s['climate_ack']:
+            raise ValueError('Attendez le choix des achats et la reprise du maître.')
+        # Toute tomate achetée reste payée même si elle n’entre pas dans cette recette.
+        purchase = {'espagne': 135, 'argentine': 108, 'reserve': 0}[s['crisis_offer']]
+        price = CRISIS_RECIPES[recipe][1] + purchase
+        if s['first']['cost'] + price > 3000:
+            raise ValueError('Cette recette dépasse le budget. Essayez une autre préparation.')
+        s['crisis_recipe'] = recipe
+        s['second'] = {'id': recipe, 'cost': price, 'reuse': False, 'adaptation': 'Recette sans tomate ; stock cru non servi transformé. Effet sur les rejets à tester.'}
+        s['reviewed'] = True
+        reset_supply(s)
+        s.update(harvest_done=True, supply_done=True, supply_strategy='direct')
+        return
+    if s['phase'] == 3 and s['event'] == 'secheresse' and action == 'menu':
+        raise ValueError('Choisissez la mission chou-fleur sans tomate.')
     if action == 'valorisation' and role == 'supplier' and s['phase'] in (2, 4):
         if values.get('value') not in ('compostage', 'methanisation'):
             raise ValueError('Choisissez une filière proposée.')

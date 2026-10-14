@@ -18,8 +18,8 @@ def load_cards(revision):
 def load_engine(revision):
     return isolated_module('abc_game.py', revision)
 
-cards = load_cards('abc-cartes-kilometres-v22-safe')
-engine = load_engine('cantine-v4-grouped-first-effect-safe')
+cards = load_cards('abc-cartes-secheresse-v23-safe')
+engine = load_engine('cantine-v5-manual-drought-safe')
 cards.GAME_ENGINE = engine
 climate_pause, menu_consequences, sourcing_card = cards.climate_pause, cards.menu_consequences, cards.sourcing_card
 final_debate = cards.final_debate
@@ -219,6 +219,10 @@ def show_mission(role, s):
         st.rerun()
 
 def supplier_panel(s):
+    if s['phase'] == 3 and s['event'] == 'secheresse':
+        cards.drought_offers(s, act)
+        if not s.get('crisis_recipe'):
+            return
     phase = s['phase']
     if phase in (2, 4):
         st.subheader('Responsable des achats · Budget et destination des biodéchets')
@@ -298,6 +302,9 @@ def supplier_panel(s):
             act('approve')
 
 def manager_panel(s):
+    if s['phase'] == 3 and s['event'] == 'secheresse':
+        cards.drought_chef(s, act)
+        return
     phase = s['phase']
     cards.chef_nutrition(s)
     with st.expander('Préparer demain avec les rejets de notre cantine', expanded=phase == 3):
@@ -538,9 +545,23 @@ def game():
             act('start_game')
         cards.welcome_cards()
         return
+    if role == 'master' and phase in (1, 2, 3) and not s.get('event') and not s.get('reflection'):
+        if st.button('🌵 Déclencher la sécheresse et ouvrir la discussion', type='primary'):
+            act('event', value='secheresse')
+    if s.get('crisis_pause'):
+        cards.drought_discussion(s)
+        if role == 'master' and st.button('Reprendre le jeu après les discussions', type='primary'):
+            act('crisis_resume')
+        elif role != 'master':
+            st.info('Discussion commune : le maître débloquera le jeu.')
+        return
     if s.get('reflection'):
         cards.reflection_card(s['reflection'], s, role == 'master', lambda: act('resume_reflection'))
         return
+    if s.get('event') == 'secheresse':
+        with st.expander('Lectures croisées · Climat, achats et observations A.B.C.', expanded=False):
+            cards.drought_discussion(s)
+            st.write('Croisez les colonnes A.B.C. : préparation, part mangée et avis. Puis comparez prix d’achat, délais, quantités utilisables et coût des tomates restées en stock. Chaque équipe explique sa contrainte aux deux autres.')
     if s.get('notices'):
         note = s['notices'][-1]
         st.info('Dernière décision : ' + note['title'] + ' — ' + note['effect'])
@@ -592,7 +613,7 @@ def game():
         st.caption('Les équipes ont terminé : vous pouvez poursuivre.' if ready else 'En attente des décisions nécessaires : Suivant se déverrouillera lorsqu’elles auront terminé.')
         if st.button('Afficher un indice commun'):
             act('hint')
-        st.caption('La sécheresse se déclenche automatiquement entre les deux journées, après la pause illustrée.')
+        st.caption('Vous choisissez le moment de la sécheresse avec le bouton en haut. Les achats et la recette sont adaptés au jour 2.')
     elif role == 'manager':
         manager_panel(s)
     elif role == 'supplier':
