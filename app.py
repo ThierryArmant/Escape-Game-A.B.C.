@@ -8,7 +8,7 @@ def load_cards(revision):
     import climate_cards
     return importlib.reload(climate_cards)
 
-cards = load_cards('abc-cartes-nutrition-climat-v20')
+cards = load_cards('abc-cartes-kilometres-v21')
 climate_pause, menu_consequences, sourcing_card = cards.climate_pause, cards.menu_consequences, cards.sourcing_card
 final_debate = cards.final_debate
 
@@ -65,6 +65,17 @@ store.__class__ = Store
 st.title('🌱 Escape Game A.B.C.')
 st.caption('600 repas · Trois équipes · Une réussite collective')
 
+# A team URL reconnects to the same in-memory session after browser reload.
+if 'auth' not in st.session_state:
+    return_code = st.query_params.get('partie', '').strip().upper()
+    return_role = st.query_params.get('equipe', '')
+    if return_code and return_role in ('students', 'manager', 'supplier'):
+        try:
+            st.session_state.auth = store.join(return_code, return_role)
+        except ValueError:
+            st.warning('Cette partie n’est plus disponible. Demandez le code actuel au maître du jeu.')
+            st.query_params.clear()
+
 if 'auth' not in st.session_state:
     a, b = st.columns(2)
     with a:
@@ -91,6 +102,12 @@ if 'auth' not in st.session_state:
     st.stop()
 
 auth = st.session_state.auth
+if auth['role'] != 'master':
+    if st.query_params.get('partie') != auth['code'] or st.query_params.get('equipe') != auth['role']:
+        st.query_params.from_dict({'partie': auth['code'], 'equipe': auth['role']})
+    with st.expander('Point de retour de mon équipe'):
+        st.write('Cette adresse vous reconnecte à la même partie. En cas de fermeture ou d’actualisation, rouvrez-la : vos choix restent enregistrés tant que la partie est disponible.')
+        st.link_button('Ouvrir le lien de retour', 'https://escape-game-abc-cantine.streamlit.app/?partie=' + auth['code'] + '&equipe=' + auth['role'])
 st.info(f"{ROLES[auth['role']]} · Code : {auth['code']}")
 if auth['role'] == 'master':
     if st.button('Arrêter et remettre la partie à zéro'):
@@ -220,6 +237,11 @@ def supplier_panel(s):
                 act('production', value=mode, source=source, animal_offer=animal_offer)
         return
     st.caption('Offre légumes choisie : ' + PRODUCTION[s['production']]['name'])
+    st.success('Vos tarifs sont enregistrés. Cette équipe reste dans la partie ; la commande du chef apparaîtra ici.')
+    with st.expander('Retrouver mes affiches et mes tarifs', expanded=not s['first']):
+        cards.purchase_posters()
+        st.write('Poulet retenu : ' + ('Régional · 576 € pour 72 kg' if s['meat_source'] == 'regional' else 'Importé · 432 € pour 72 kg'))
+        st.write('Offre supplémentaire : ' + MENUS[s['animal_offer']][0])
     menu = s['first' if phase == 1 else 'second']
     if not menu or not s['second'] or phase == 3 and not s['reviewed']:
         st.info('Votre offre est envoyée. Les quantités apparaîtront dès que le chef aura commandé.')
