@@ -79,10 +79,10 @@ def climate_pause(day1, is_master, resume, menus=None):
         ('water', 'L’eau circule', 'évaporation → nuages → précipitations → sols et cours d’eau', 'Le réchauffement modifie le cycle de l’eau', 'Un climat plus chaud modifie l’évaporation et les précipitations. Les changements dépendent des régions : certains lieux risquent davantage de manquer d’eau, d’autres de subir des pluies intenses.', 'Votre levier : anticiper les risques et garder des alternatives.', 'GIEC · Eau, impacts et adaptation', WATER_URL, 'Photo illustrative du Mékong, au Laos ; elle ne représente pas la sécheresse fictive du jeu.'),
         ('drought', '−50 %', 'de carottes disponibles au jour 2 dans la simulation', 'La sécheresse atteint votre prochain menu', 'Dans le jeu, l’offre de carottes passe de 90 à 45 kg. Le courtier doit trouver un complément et le chef peut changer sa recette. Les quantités et les surcoûts du jeu sont fictifs.', 'Votre levier : revoir ensemble menu, portions et approvisionnement.', 'Scénario A.B.C. · hypothèse pédagogique', None, 'Photo réelle de sol sec à Chowilla, en Australie ; ce n’est pas la ferme fictive du jeu.'),
     ]
-    tabs = st.tabs(['1 · Produire', '2 · Gaspiller', '3 · Viande', '4 · Climat', '5 · Eau', '6 · Sécheresse'])
-    for index, (tab, args) in enumerate(zip(tabs, definitions), 1):
-        with tab:
-            render_photo_card(index, *args)
+    for offset in range(0, len(definitions), 3):
+        for index, (column, args) in enumerate(zip(st.columns(3), definitions[offset:offset + 3]), offset + 1):
+            with column:
+                render_photo_card(index, *args)
     st.info(f'Votre jour 1 : {day1["waste"]} kg de restes comestibles simulés. Le chiffre du jeu et les chiffres mondiaux ci-dessus ne décrivent pas la même échelle.')
     if menus and sum(m in ('boeuf', 'boeuf_bresil', 'boeuf_argentine') for m in menus) == 2:
         st.warning('Votre prévision contenait du bœuf aux deux repas. Une offre moins chère peut résoudre le budget sans supprimer les émissions liées à l’élevage. Vous pouvez varier le jour 2.')
@@ -174,7 +174,7 @@ def welcome_cards():
     st.markdown(STYLE, unsafe_allow_html=True)
     st.subheader('Avant de jouer · La cantine commence bien avant le plateau')
     st.write('Lisez ces quatre fiches pendant que les autres équipes se connectent. Le maître lancera ensuite le jeu. Le chronomètre ne tourne pas encore.')
-    a, b, c, d = st.tabs(['1 · Agriculture', '2 · Forêts', '3 · Du champ au plateau', '4 · Atmosphère et océans'])
+    a, b, c, d = st.columns(4)
     with a:
         render_photo_card(1, 'farm', 'Cultiver et élever', 'Des activités humaines pour nous nourrir', 'D’où vient notre repas ?', 'Les légumes poussent dans les champs. Les animaux ont besoin de nourriture. Produire demande des sols, de l’eau et de l’énergie ; l’élevage de ruminants émet aussi du méthane, un gaz à effet de serre.', 'À observer : quel plat choisir, et pour combien de convives ?', 'GIEC · Synthèse 2023', IPCC_URL)
     with b:
