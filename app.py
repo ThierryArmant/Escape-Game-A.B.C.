@@ -8,7 +8,7 @@ def load_cards(revision):
     import climate_cards
     return importlib.reload(climate_cards)
 
-cards = load_cards('abc-cartes-pauses-v9')
+cards = load_cards('abc-cartes-compact-v10')
 climate_pause, menu_consequences, sourcing_card = cards.climate_pause, cards.menu_consequences, cards.sourcing_card
 final_debate = cards.final_debate
 
@@ -27,6 +27,33 @@ BEEF = engine.BEEF
 POTATO = engine.POTATO
 
 st.set_page_config(page_title='Escape Game A.B.C.', page_icon='🌱', layout='wide')
+
+# Compact layout for 13–14 inch school tablets; touch controls stay usable.
+st.markdown("""<style>
+[data-testid="stMainBlockContainer"]{padding:1rem 1.2rem 2rem;max-width:1480px}
+[data-testid="stVerticalBlock"]{gap:.55rem}
+h1{font-size:1.7rem!important;padding:.2rem 0!important}
+h2{font-size:1.35rem!important;padding:.2rem 0!important}
+h3{font-size:1.1rem!important;padding:.15rem 0!important}
+[data-testid="stMarkdownContainer"] p,[data-testid="stMarkdownContainer"] li{font-size:.94rem;line-height:1.35}
+[data-testid="stAlert"]{padding:.45rem .65rem}
+[data-testid="stMetricValue"]{font-size:1.5rem}
+[data-testid="stMetricLabel"] p{font-size:.85rem}
+[data-testid="stTable"] td,[data-testid="stTable"] th{padding:.3rem .45rem;font-size:.85rem;line-height:1.25}
+[data-testid="stForm"]{padding:.6rem}
+[data-testid="stButton"] button,[data-testid="stFormSubmitButton"] button{min-height:44px;padding:.35rem .7rem}
+[data-testid="stRadio"] label{min-height:40px}
+[data-testid="stDialog"] [role="dialog"]{max-height:85dvh;overflow-y:auto}
+@media(max-width:900px){[data-testid="stMainBlockContainer"]{padding:.65rem .7rem 1.5rem}}
+</style>""", unsafe_allow_html=True)
+
+def compact_table(rows):
+    if isinstance(rows, list) and len(rows) > 4:
+        with st.expander(f'Voir le tableau détaillé · {len(rows)} lignes'):
+            st.table(rows)
+    else:
+        st.table(rows)
+
 
 @st.cache_resource
 def shared_store(revision):
@@ -145,8 +172,7 @@ def show_mission(role, s):
     st.caption(ROLES[role])
     st.subheader(title)
     st.write(text)
-    menu_consequences(s)
-    st.caption('Les outils et les boutons utiles vous attendent sur votre page.')
+    st.caption('Les boutons utiles vous attendent sur votre page.')
     if st.button('J’ai compris', type='primary'):
         st.rerun()
 
@@ -163,9 +189,9 @@ def supplier_panel(s):
             st.info('Demande des élèves : ' + ' ; '.join(MENUS[k][0] for k in s['preferences']))
         if s['first'] and s['second']:
             st.info('Commande du chef : ' + ' ; '.join(MENUS[s[k]['id']][0] for k in ('first', 'second')))
-            st.table([{'Produit': k, 'Quantité (kg)': v} for k, v in requirements(s).items()])
+            compact_table([{'Produit': k, 'Quantité (kg)': v} for k, v in requirements(s).items()])
         st.write('Vous êtes courtier, pas agriculteur : vous choisissez des fournisseurs. Dans ce scénario fictif, l’offre bio est plus chère. Les frais de culture du tableau expliquent le prix du producteur ; ce ne sont pas vos frais de courtier.')
-        st.table([{'Mode': v['name'], 'Coût pommes de terre €/kg': v['potato_cost'], 'Vente pommes de terre €/kg': v['potato_price'], 'Coût carottes €/kg': v['carrot_cost'], 'Vente carottes €/kg': v['carrot_price']} for v in PRODUCTION.values()])
+        compact_table([{'Mode': v['name'], 'Coût pommes de terre €/kg': v['potato_cost'], 'Vente pommes de terre €/kg': v['potato_price'], 'Coût carottes €/kg': v['carrot_cost'], 'Vente carottes €/kg': v['carrot_price']} for v in PRODUCTION.values()])
         sourcing_card()
         with st.form('production'):
             mode = st.radio('Votre choix', list(PRODUCTION), format_func=lambda k: PRODUCTION[k]['name'])
@@ -183,7 +209,7 @@ def supplier_panel(s):
             st.write('Les élèves souhaitent : ' + ' ; '.join(MENUS[k][0] for k in s['preferences']))
         return
     st.subheader('Commande des deux jours' if phase == 1 else 'Commande révisée du jour 2')
-    st.table([{'Produit': k, 'Quantité à livrer (kg)': v} for k, v in requirements(s).items()])
+    compact_table([{'Produit': k, 'Quantité à livrer (kg)': v} for k, v in requirements(s).items()])
     sourcing_card()
     st.caption('Stocks partenaires réservables : poulet 144 kg, pommes de terre 240 kg, carottes 180 kg, riz sec 72 kg, lentilles sèches 72 kg, bœuf 144 kg. Les deux repas doivent rester variés. Les légumes constituent votre calcul de vérification ; les autres lignes sont vérifiées avec les stocks du catalogue.')
     h = harvest(s)
@@ -240,7 +266,7 @@ def manager_panel(s):
     w = waste(s)
     st.subheader('Bilan automatique du service')
     value = round(s['first' if phase == 2 else 'second']['cost'] * w / 300)
-    st.table([
+    compact_table([
         {'Résultat': 'Restes comestibles', 'Valeur': f'{w} kg'},
         {'Résultat': 'Restes par élève', 'Valeur': f'{w * 1000 / 600:g} g'},
         {'Résultat': 'Part du repas jetée', 'Valeur': f'{w / 3:g} %'},
@@ -253,7 +279,7 @@ def manager_panel(s):
 def plan_two_days(s):
     st.subheader('Préparer les deux repas à l’avance')
     st.write('Un repas doit nourrir, donner envie de manger et respecter le budget. Le courtier doit connaître vos deux commandes pour réserver les bons produits.')
-    st.table([
+    compact_table([
         {'Repère': 'Légumes et fruits', 'Pourquoi ?': 'Varier les goûts et apporter notamment des fibres et vitamines.', 'Dans le jeu': 'Légumes dans les plats ; fruits et entrées dans la base fixe.'},
         {'Repère': 'Féculents', 'Pourquoi ?': 'Apporter de l’énergie ; privilégier aussi les versions complètes ou semi-complètes.', 'Dans le jeu': 'Pommes de terre ou riz.'},
         {'Repère': 'Sources de protéines variées', 'Pourquoi ?': 'Alterner les aliments : la viande n’est pas nécessaire tous les jours.', 'Dans le jeu': 'Un jour avec volaille, un autre avec lentilles.'},
@@ -264,7 +290,7 @@ def plan_two_days(s):
     options = [k for k in MENUS if k != 'secours']
     if s.get('preferences'):
         st.info('Menus souhaités par les élèves : ' + ' ; '.join(MENUS[k][0] for k in s['preferences']))
-    st.table([{'Plat proposé': MENUS[m][0], 'Prix pour 600 repas (€)': cost(m, mode=s['production'] or 'conventionnel', beef_source=s['beef_source'])} for m in options])
+    compact_table([{'Plat proposé': MENUS[m][0], 'Prix pour 600 repas (€)': cost(m, mode=s['production'] or 'conventionnel', beef_source=s['beef_source'])} for m in options])
     st.caption('Les prix et le budget des deux jours sont calculés pour vous.')
     with st.form('two_days'):
         first = st.selectbox('Jour 1 · Menu', options, format_func=lambda k: MENUS[k][0])
@@ -290,7 +316,7 @@ def menu_picker(s):
         st.info('Stock fictif utilisable de la veille : 12 kg de pommes de terre crues et 9 kg de carottes crues, non servies et conservées dans des conditions adaptées. Ce stock était déjà acheté avant les deux repas du jeu. Il est distinct des déchets des plateaux, qui ne sont pas remis en cuisine.')
     st.subheader('Comparer les repas pour 600 convives')
     st.caption('Base fixe de 540 € incluse. Les prix tiennent compte du choix du courtier et des aléas.')
-    st.table([{'Menu': MENUS[m][0], 'Prix (€)': cost(m, event, s['production'], beef_source=s['beef_source']), 'Budget restant sur deux repas (€)': 3000 - spent - cost(m, event, s['production'], beef_source=s['beef_source'])} for m in options])
+    compact_table([{'Menu': MENUS[m][0], 'Prix (€)': cost(m, event, s['production'], beef_source=s['beef_source']), 'Budget restant sur deux repas (€)': 3000 - spent - cost(m, event, s['production'], beef_source=s['beef_source'])} for m in options])
     st.caption('Aucun calcul à saisir : le budget s’actualise avec votre proposition.')
     with st.form('menu_' + str(phase)):
         choice = st.selectbox('Menu', options, format_func=lambda k: MENUS[k][0])
@@ -358,13 +384,13 @@ def service_time(s):
 def service_picker():
     st.subheader('À la cantine : 30 minutes pour passer au self et manger')
     st.write('Certains élèves ont une petite faim, d’autres une grande faim. Le plat est servi à l’assiette par un agent ; les entrées et desserts sont en libre-service. Vous devez aussi garder du temps pour manger tranquillement.')
-    st.table([
+    compact_table([
         {'Service du plat': SERVICE_LABELS['unique'], 'Ce qui se passe': 'L’agent sert la même quantité à chacun.', 'Avantage et contrainte': 'Passage simple, mais quantité parfois trop grande ou trop petite.', 'Temps estimé': '6 min'},
         {'Service du plat': SERVICE_LABELS['adapte'], 'Ce qui se passe': 'Vous annoncez petite ou grande faim ; un complément reste possible.', 'Avantage et contrainte': 'Quantité adaptée, mais échange et complément à organiser.', 'Temps estimé': '8 min'},
         {'Service du plat': SERVICE_LABELS['explique'], 'Ce qui se passe': 'Le plat est présenté ; vous pouvez goûter puis demander une portion adaptée.', 'Avantage et contrainte': 'Découvrir le plat, mais présentation et dégustation prennent du temps.', 'Temps estimé': '10 min'},
     ])
     st.write('**Entrées et desserts en libre-service :** choisir selon votre faim aide à prendre ce que vous pensez manger. Goûter demande une organisation prévue par la cantine.')
-    st.table([
+    compact_table([
         {'Choix au libre-service': SELF_SERVICE['tout'][0], 'Temps estimé': '3 min'},
         {'Choix au libre-service': SELF_SERVICE['faim'][0], 'Temps estimé': '2 min'},
         {'Choix au libre-service': SELF_SERVICE['gouter'][0], 'Temps estimé': '4 min'},
@@ -392,9 +418,9 @@ def game():
     seconds = max(0, 1800 - int(engine.elapsed(s)))
     st.caption(f'Temps de jeu actif : {seconds // 60} min {seconds % 60:02d} s · Les pauses de lecture ne sont pas décomptées.')
     if not s.get('game_started', True):
-        cards.welcome_cards()
         if role == 'master' and st.button('Démarrer le jeu pour toutes les équipes', type='primary'):
             act('start_game')
+        cards.welcome_cards()
         return
     if s.get('reflection'):
         cards.reflection_card(s['reflection'], s, role == 'master', lambda: act('resume_reflection'))
@@ -414,7 +440,7 @@ def game():
     if st.button('❓ Que doit faire mon équipe ?'):
         st.session_state.mission_pending = True
         st.rerun()
-    st.info(f'**{title}** — {instruction}')
+    st.caption(f'**{title}** — {instruction}')
     st.progress((phase - 1) / 4, text='Préparation → Jour 1 → Pause et adaptation → Jour 2 → Bilan')
     st.subheader(['', 'Préparer les deux journées', 'Jour 1 · Servir et mesurer', 'Entre les deux jours · Adapter le menu', 'Jour 2 · Servir et comparer', 'Bilan des deux journées'][phase])
     spent = sum(s[k]['cost'] for k in ('first', 'second') if s[k])
@@ -460,7 +486,7 @@ def game():
     if phase == 5:
         cards.choice_footprint(s)
         st.success('Les deux journées sont terminées. Chaque équipe a contribué !')
-        st.table([{'Journée': day, 'Restes (kg)': s[key]['waste'], 'Par convive (g)': s[key]['waste'] * 1000 / 600, 'Valeur estimée des restes (€)': round(s[key]['cost'] * s[key]['waste'] / 300)} for day, key in [('Jour 1', 'day1'), ('Jour 2', 'day2')]])
+        compact_table([{'Journée': day, 'Restes (kg)': s[key]['waste'], 'Par convive (g)': s[key]['waste'] * 1000 / 600, 'Valeur estimée des restes (€)': round(s[key]['cost'] * s[key]['waste'] / 300)} for day, key in [('Jour 1', 'day1'), ('Jour 2', 'day2')]])
         change = s['day1']['waste'] - s['day2']['waste']
         st.write(f'Évolution : {change:g} kg de restes en moins.' if change >= 0 else f'Évolution : {-change:g} kg de restes en plus. Qu’est-ce qui pourrait être amélioré ?')
         st.write('Quel choix a réduit les restes ? Quelle difficulté a rencontré le courtier ? Que changeriez-vous à votre vraie cantine ?')
