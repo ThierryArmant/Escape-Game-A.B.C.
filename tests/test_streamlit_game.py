@@ -118,3 +118,18 @@ class CommonPauseTests(unittest.TestCase):
         state = store.read(master)
         self.assertEqual(state['first']['cost'], cost('vegetal', mode='bio'))
         self.assertFalse(state['approvals']['students'])
+
+class AbcMenuTests(unittest.TestCase):
+    def test_observed_rates_drive_scenario_and_recycling_choice(self):
+        from abc_game import initial, apply, waste
+        s=initial();apply(s,'master','start_game')
+        apply(s,'manager','plans',first='abc_cantine',second='vegetal')
+        self.assertEqual(requirements(s)['Chou-fleur en gratin'],90)
+        apply(s,'master','resume_reflection')
+        s['phase']=2
+        apply(s,'students','service',value='unique',self_service='tout')
+        self.assertEqual(waste(s),106)
+        apply(s,'master','resume_reflection')
+        apply(s,'supplier','valorisation',value='compostage')
+        self.assertEqual(s['waste_policy']['2'],'compostage')
+        self.assertEqual(s['reflection']['role'],'supplier')

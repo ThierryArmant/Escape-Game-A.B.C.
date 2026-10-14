@@ -77,7 +77,7 @@ def climate_pause(day1, is_master, resume, menus=None):
         ('cattle', '18 trajets contre 3', 'Marseille → Paris en voiture diesel : l’équivalent climatique de la viande pour vos 600 élèves', 'Un repas au bœuf ou au poulet : imaginez les trajets', 'Pour 600 portions de viande de 120 g, le bœuf représente environ les émissions de 18 trajets Marseille–Paris en voiture diesel. Le poulet représente environ 3 de ces mêmes trajets. Les élèves mangent la même quantité de viande, mais l’impact sur le climat change beaucoup.', 'Votre levier : varier les protéines et comparer les fournisseurs.', 'ADEME · Impact CO₂ · Agribalyse 3.2', BEEF_URL, 'Ordre de grandeur : portions de 120 g, viande seule ; bœuf 2 016 kg CO₂e, poulet 328 kg CO₂e. Un trajet = un aller simple d’environ 800 km. Voiture moyenne diesel : 142 g CO₂e/km (Impact CO₂, modèle 2025). Valeurs arrondies, issues de moyennes.'),
         ('industry', '+1,1 °C', 'température mondiale moyenne en 2011–2020 par rapport à 1850–1900', 'Une hausse moyenne qui change les conditions', 'Les activités humaines ont renforcé l’effet de serre et réchauffé le climat. Les émissions de l’alimentation s’ajoutent à celles des autres activités. Ce chiffre du GIEC porte sur une période précise.', 'Votre levier : réduire les émissions évitables, notamment le gaspillage.', 'GIEC · Rapport de synthèse 2023', IPCC_URL, 'Ce n’est pas la température actuelle d’une journée. Photo d’une centrale à Rostock ; un panache visible ne mesure pas le CO₂.'),
         ('water', 'L’eau circule', 'évaporation → nuages → précipitations → sols et cours d’eau', 'Le réchauffement modifie le cycle de l’eau', 'Un climat plus chaud modifie l’évaporation et les précipitations. Les changements dépendent des régions : certains lieux risquent davantage de manquer d’eau, d’autres de subir des pluies intenses.', 'Votre levier : anticiper les risques et garder des alternatives.', 'GIEC · Eau, impacts et adaptation', WATER_URL, 'Photo illustrative du Mékong, au Laos ; elle ne représente pas la sécheresse fictive du jeu.'),
-        ('drought', '−50 %', 'de carottes disponibles au jour 2 dans la simulation', 'La sécheresse atteint votre prochain menu', 'Dans le jeu, l’offre de carottes passe de 90 à 45 kg. Le courtier doit trouver un complément et le chef peut changer sa recette. Les quantités et les surcoûts du jeu sont fictifs.', 'Votre levier : revoir ensemble menu, portions et approvisionnement.', 'Scénario A.B.C. · hypothèse pédagogique', None, 'Photo réelle de sol sec à Chowilla, en Australie ; ce n’est pas la ferme fictive du jeu.'),
+        ('drought', '−50 %', 'de carottes disponibles au jour 2 dans la simulation', 'La sécheresse atteint votre prochain menu', 'Dans le jeu, l’offre de carottes passe de 90 à 45 kg. Le responsable des achats doit trouver un complément et le chef peut changer sa recette. Les quantités et les surcoûts du jeu sont fictifs.', 'Votre levier : revoir ensemble menu, portions et approvisionnement.', 'Scénario A.B.C. · hypothèse pédagogique', None, 'Photo réelle de sol sec à Chowilla, en Australie ; ce n’est pas la ferme fictive du jeu.'),
     ]
     for offset in range(0, len(definitions), 3):
         for index, (column, args) in enumerate(zip(st.columns(3), definitions[offset:offset + 3]), offset + 1):
@@ -199,13 +199,17 @@ def welcome_cards():
         st.caption('Indicateur calculé par Global Footprint Network : ressources biologiques et services écologiques, dont l’absorption du CO₂. Ce n’est pas la date où toutes les ressources sont épuisées, ni un budget de CO₂ uniquement. Date mondiale pour 2026, pas une date propre au collège.')
         st.markdown('[Date et méthode — Global Footprint Network](https://overshoot.footprintnetwork.org/newsroom/press-release-june-2026-english/)')
 
-    st.info('Chef : préparer deux menus. Élèves : exprimer vos envies. Courtier : consulter vos offres, puis répondre aux demandes. Les choix sont proposés par le jeu : aucun calcul à saisir.')
+    st.info('Chef : préparer deux menus. Élèves : exprimer vos envies. Responsable des achats : consulter vos offres, puis répondre aux demandes. Les choix sont proposés par le jeu : aucun calcul à saisir.')
 
 def reflection_card(note, s, is_master, resume):
     st.markdown(STYLE, unsafe_allow_html=True)
     st.warning('⏸ Pause commune · Le chronomètre est arrêté sur tous les écrans.')
-    st.caption('Décision transmise par : ' + {'manager': 'le chef cuisinier', 'students': 'les élèves', 'supplier': 'le courtier'}.get(note['role'], 'le maître'))
+    st.caption('Décision transmise par : ' + {'manager': 'le chef cuisinier', 'students': 'les élèves', 'supplier': 'le responsable des achats'}.get(note['role'], 'le maître'))
     render_photo_card(note['number'], note['photo'], 'Une décision → des effets', 'Lire · comprendre · en discuter', note['title'], note['effect'], note['question'], 'A.B.C. · Conséquences du scénario et repères sourcés', None, 'Prix, stocks et restes : simulation. Repères climatiques : sources ci-dessous.')
+    if note['role'] in ('students', 'manager'):
+        abc_observations()
+    if note['role'] == 'supplier' and note['photo'] == 'farm':
+        purchase_reveal(s)
     if s.get('first') and s.get('second'):
         st.write('**Jour 1 :** ' + __import__('abc_game').MENUS[s['first']['id']][0])
         st.write('**Jour 2 :** ' + __import__('abc_game').MENUS[s['second']['id']][0])
@@ -258,3 +262,68 @@ def long_term_choices(menus):
         st.caption('Les horizons 1, 4 et 10 ans sont des fenêtres de comparaison du jeu, pas les dates annoncées d’une catastrophe. On ne convertit pas les émissions de cette cantine en degrés de réchauffement ni en sécheresse locale. Les tonnes CO₂e cumulées ne décrivent pas exactement l’évolution physique de chaque gaz.')
         st.success('Question à débattre : ce qui coûte moins cher aujourd’hui est-il forcément le meilleur choix si l’on considère aussi la variété, le gaspillage, les producteurs et le climat ?')
         st.markdown('[GIEC · Réchauffement, risques et adaptation](' + IPCC_URL + ') · [GIEC · Eau](' + WATER_URL + ')')
+
+def abc_observations():
+    st.subheader('Dans notre vraie cantine · Ce que révèle A.B.C.')
+    st.caption('Extraits du collège J. Giono, service du 1er octobre 2026, consultés le 14 octobre. Ces observations sont distinctes des 600 repas fictifs du jeu.')
+    a, b = st.columns(2)
+    with a:
+        st.markdown('### Paupiette · Environ un tiers non mangé')
+        st.image(str(Path(__file__).parent / 'assets' / 'abc' / 'paupiette.jpg'), width='stretch')
+        st.write('**30 portions observées · 67 % mangé.** Le détail mentionne du bœuf et une sauce italienne. Sept élèves disent « pas aimé » ; six disent « pas le temps ».')
+        st.info('A.B.C. estime 4,39 kg de restes évitables attribués à cet aliment. Le 5,27 kg CO₂e de la capture utilise un facteur de travail par défaut : la recette doit être renseignée pour une estimation adaptée.')
+    with b:
+        st.markdown('### Chou-fleur · Environ trois quarts non mangés')
+        st.image(str(Path(__file__).parent / 'assets' / 'abc' / 'chou-fleur.jpg'), width='stretch')
+        st.write('**14 portions observées · 26 % mangé.** Il s’agit d’un gratin avec béchamel. Sept élèves disent « pas aimé » ; quatre disent « pas le temps ».')
+        st.info('A.B.C. estime 2,16 kg de restes évitables attribués à cet aliment. Le 3,09 kg CO₂e de la capture repose sur le chou-fleur cuit à 1,43 kg CO₂e/kg ; il ne décompose pas la béchamel du gratin.')
+    st.write('**Chaque aliment a déjà mobilisé des ressources avant d’être jeté.** Pour chiffrer toute l’assiette, il faut compter la viande, les légumes, les sauces, les accompagnements, puis les quantités effectivement servies et jetées. La recette compte autant que le nom du plat.')
+    st.success('Que changer au prochain service ? Une quantité selon la faim, la possibilité de goûter, une autre préparation ou davantage de temps pour manger : les observations aident à choisir.')
+    with st.expander('Lire ces captures correctement'):
+        st.write('Les pourcentages décrivent les portions scannées, pas l’ensemble des convives. Les kilos affichés sont les estimations attribuées aux aliments par A.B.C. ; ils ne sont pas chacun une pesée indépendante. Les petits effectifs et la couverture des scans limitent la représentativité. Les restes inévitables ne doivent pas être confondus avec les restes comestibles évitables.')
+        st.markdown('[Ouvrir A.B.C. — Assiette Bas Carbone](https://thierryarmant.github.io/E3D-cantine/)')
+
+
+def abc_chef(s):
+    st.subheader('Le chef s’appuie sur les rejets A.B.C.')
+    st.table([
+        {'Aliment observé': 'Tomates', 'Rejet moyen dans les scans': '35 %', 'Motifs à examiner': '30 portions observées'},
+        {'Aliment observé': 'Paupiette', 'Rejet moyen dans les scans': '33 %', 'Motifs à examiner': '7 « pas aimé » ; 6 « pas le temps » sur 30 portions'},
+        {'Aliment observé': 'Chou-fleur en gratin', 'Rejet moyen dans les scans': '74 %', 'Motifs à examiner': '7 « pas aimé » ; 4 « pas le temps » sur 14 portions'},
+        {'Aliment observé': 'Pommes noisettes', 'Rejet moyen dans les scans': '13 %', 'Motifs à examiner': '16 portions observées'},
+        {'Aliment observé': 'Tiramisu', 'Rejet moyen dans les scans': '23 %', 'Motifs à examiner': '20 portions observées'},
+        {'Aliment observé': 'Pain', 'Rejet moyen dans les scans': '40 %', 'Motifs à examiner': '35 portions observées sur deux jours'},
+    ])
+    st.write('Le chou-fleur a été moins mangé que les pommes noisettes dans cet échantillon. Pour demain, comparez les possibilités : changer la préparation, proposer de goûter, adapter les portions et garder du temps à table. Ne supprimez pas les légumes uniquement parce qu’ils sont moins appréciés.')
+    st.caption('Ces chiffres viennent des scans A.B.C. du 1er octobre 2026 au collège J. Giono. Ils ne prouvent pas à eux seuls pourquoi un aliment a été laissé ; plusieurs causes peuvent se combiner.')
+    if any(s.get(k) and s[k]['id'] == 'abc_cantine' for k in ('first', 'second')):
+        st.info('Menu A.B.C. du jeu : prix fictif de 1 380 € pour 600 repas. Quantités hypothétiques : 72 kg de paupiettes préparées, 90 kg de gratin et 120 kg de pommes noisettes. Avec les taux de rejet observés, le scénario de portion unique prévoit environ 106 kg de restes. Les autres organisations simulent une réduction ; cette efficacité n’a pas été mesurée au collège.')
+
+def purchase_posters():
+    st.markdown(STYLE, unsafe_allow_html=True)
+    st.subheader('Votre vitrine d’achat · Comparez prix et provenance')
+    st.caption('Offres fictives pour 72 kg de viande, soit 600 portions de 120 g. Les accompagnements ne sont pas inclus dans ces prix. La commande totale est calculée avec les menus du chef.')
+    offers = [
+        ('cattle', '396 €', 'Brésil · Bœuf · 5,50 €/kg', 'Le prix le plus bas de ces trois offres', 'Une offre importée pour votre catalogue. Elle semble intéressante pour préserver le budget. Quelles autres informations vous manquent ?', 'Avant de retenir une offre : comparer coût, disponibilité et besoins.', 'Photo de bovins dans un pâturage britannique, illustrative ; elle ne montre pas ce fournisseur.'),
+        ('chicken', '432 €', 'Poulet importé · 6 €/kg', 'Une autre viande dans le catalogue', 'Une offre importée de poulet, livrable à J+2 dans le scénario. Le prix est plus bas que celui du poulet régional à 576 €.', 'Comparer aussi les délais et la variété des deux repas.', 'Photo illustrative de poulets britanniques ; le pays fournisseur n’est pas précisé pour cette offre.'),
+        ('pig', '504 €', 'Ventoux · Porc · 7 €/kg', 'Une offre proche', 'Une offre présentée comme locale dans le scénario. Elle coûte davantage que les deux offres précédentes. La proximité peut favoriser les liens avec les producteurs.', 'Un prix supérieur doit-il faire éliminer une offre ?', 'Photo illustrative d’un élevage britannique ; elle ne montre pas un élevage du Ventoux.'),
+    ]
+    for index, (column, args) in enumerate(zip(st.columns(3), offers), 1):
+        key, price, origin, title, text, question, note = args
+        with column:
+            render_photo_card(index, key, price, origin, title, text, question, 'Catalogue A.B.C. · prix et provenances fictifs', None, note)
+    st.caption('Autres propositions fermées : poulet régional, bœuf régional ou argentin, poisson et menu de lentilles. Les prix complets et les disponibilités figurent dans les choix. La provenance seule ne permet pas de conclure à une empreinte carbone supérieure ou inférieure.')
+
+def purchase_reveal(s):
+    st.subheader('Après l’achat · Le prix ne raconte pas toute l’histoire')
+    actual = [s[k]['id'] for k in ('first', 'second') if s.get(k)]
+    if actual:
+        choice_footprint(s)
+    else:
+        st.caption('L’offre est publiée, mais les menus ne sont pas encore commandés. L’empreinte des aliments effectivement retenus apparaîtra lors de la confirmation de la livraison.')
+    animal = next((m for m in actual if m in ('boeuf', 'boeuf_bresil', 'boeuf_argentine')), None)
+    if animal in ('boeuf', 'boeuf_bresil', 'boeuf_argentine'):
+        render_photo_card(1, 'cattle', '≈ 18 trajets', 'Marseille → Paris en voiture diesel pour 600 portions de bœuf', 'Un bœuf moins cher reste du bœuf', 'Le prix importé peut laisser davantage de budget dans notre scénario. Mais le repère climatique moyen du bœuf reste bien supérieur à celui du poulet : environ 18 trajets contre 3 pour la même quantité de viande.', 'Votre marge de décision : varier les plats et demander des garanties au fournisseur.', 'ADEME · Agribalyse 3.2 / Impact CO₂', BEEF_URL, '72 kg de viande : bœuf 2 016 kg CO₂e ; poulet 328 kg. Trajet illustratif de 800 km à 142 g CO₂e/km. Moyennes génériques, pas des mesures du fournisseur ni une comparaison précise Brésil/France.')
+    elif actual:
+        carbon_comparison()
+    st.write('**Un achat a plusieurs effets :** dépense immédiate, variété des repas, conditions de production, traçabilité, transport et émissions. Une offre proche n’est pas automatiquement moins carbonée qu’une autre viande importée.')

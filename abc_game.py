@@ -5,6 +5,7 @@ import threading
 import time
 
 MENUS = {
+    'abc_cantine': ('Paupiette de bœuf, chou-fleur en gratin, pommes noisettes · A.B.C.', 1380),
     'boeuf_bresil': ('Bœuf brésilien, pommes de terre, carottes', 1260),
     'boeuf_argentine': ('Bœuf argentin, pommes de terre, carottes', 1314),
     'porc_ventoux': ('Porc du Ventoux, pommes de terre, carottes', 1368),
@@ -16,7 +17,7 @@ MENUS = {
     'secours': ('Lentilles, riz de réserve, légumes surgelés', 900),
 }
 SERVICES = {'unique': ('Portion unique', 60), 'adapte': ('Petite portion et complément', 36), 'explique': ('Portion adaptée et recette présentée', 24)}
-ROLES = {'master': 'Maître du jeu', 'students': 'Familles et élèves', 'manager': 'Chef cuisinier', 'supplier': 'Courtier en alimentation'}
+ROLES = {'master': 'Maître du jeu', 'students': 'Familles et élèves', 'manager': 'Chef cuisinier', 'supplier': 'Responsable des achats'}
 
 BEEF = {'boeuf', 'boeuf_bresil', 'boeuf_argentine'}
 POTATO = BEEF | {'regional', 'porc_ventoux'}
@@ -49,6 +50,10 @@ def stock_saving(menu, event, mode):
     return 9 * PRODUCTION[mode]['carrot_price']
 
 def harvest(s):
+    selected = [s.get('first'), s.get('second')] if s['phase'] == 1 else [s.get('second')]
+    abc_count = sum(bool(m and m['id'] == 'abc_cantine') for m in selected)
+    if abc_count:
+        return {'name': 'Produits préparés du menu A.B.C.', 'plots': abc_count, 'yield': 282, 'quantity': 282 * abc_count, 'unit': 'lots', 'need': 282 * abc_count}
     event = s['event'] if s['phase'] == 3 else None
     if s['phase'] == 1:
         return {'name': 'Carottes pour les deux journées', 'plots': 6, 'yield': 30, 'quantity': 180, 'unit': 'caisses', 'need': 180}
@@ -63,12 +68,17 @@ def harvest(s):
     return {'name': 'Carottes', 'plots': 3, 'yield': y, 'quantity': 3 * y, 'unit': 'parcelles', 'need': 81 if s['phase'] == 3 and potato and potato.get('reuse') else 90}
 
 def requirements(s):
-    quantities = {'Carottes': 0, 'Pommes de terre': 0, 'Poulet': 0, 'Bœuf': 0, 'Porc': 0, 'Poisson': 0, 'Lentilles sèches': 0, 'Riz sec': 0, 'Légumes surgelés': 0}
+    quantities = {'Carottes': 0, 'Pommes de terre': 0, 'Poulet': 0, 'Bœuf': 0, 'Porc': 0, 'Poisson': 0, 'Lentilles sèches': 0, 'Riz sec': 0, 'Légumes surgelés': 0, 'Paupiettes préparées': 0, 'Chou-fleur en gratin': 0, 'Pommes noisettes': 0}
     menus = [s['first'], s['second']] if s['phase'] == 1 else [s['second']]
     for menu in menus:
         if not menu:
             continue
         m = menu['id']
+        if m == 'abc_cantine':
+            quantities['Paupiettes préparées'] += 72
+            quantities['Chou-fleur en gratin'] += 90
+            quantities['Pommes noisettes'] += 120
+            continue
         if m in ('regional', 'importe'):
             quantities['Poulet'] += 72
         elif m in BEEF:
@@ -92,10 +102,14 @@ def requirements(s):
 def waste(s):
     if not s['service']:
         return None
-    return max(0, SERVICES[s['service']][1] + SELF_SERVICE[s.get('self_service', 'tout')][1])
+    menu = s.get('first' if s['phase'] == 2 else 'second')
+    # Scenario portions; rejection rates from ABC scans, not college-wide measurements.
+    baseline = round(72 * .33 + 90 * .74 + 120 * .13) if menu and menu['id'] == 'abc_cantine' else 60
+    simulated = round(baseline * SERVICES[s['service']][1] / 60)
+    return max(0, simulated + SELF_SERVICE[s.get('self_service', 'tout')][1])
 
 def initial():
-    return dict(game_started=False, active_elapsed=0, active_since=None, reflection=None, notices=[], preferences=None, final_card_visible=False, debate_votes={}, debate_decision=None, waste_reviewed=False, climate_ack=False, animal_offer='boeuf', beef_source='regional', meat_source=None, original_second=None, reviewed=False, day1=None, day2=None, phase=1, event=None, started=time.time(), hint=False, first=None, second=None, service=None, self_service='tout', measure=False, grams_done=False, production=None, harvest_done=False, supply_done=False, supply_strategy=None, approvals={'supplier': False, 'students': False})
+    return dict(waste_policy={}, game_started=False, active_elapsed=0, active_since=None, reflection=None, notices=[], preferences=None, final_card_visible=False, debate_votes={}, debate_decision=None, waste_reviewed=False, climate_ack=False, animal_offer='boeuf', beef_source='regional', meat_source=None, original_second=None, reviewed=False, day1=None, day2=None, phase=1, event=None, started=time.time(), hint=False, first=None, second=None, service=None, self_service='tout', measure=False, grams_done=False, production=None, harvest_done=False, supply_done=False, supply_strategy=None, approvals={'supplier': False, 'students': False})
 
 def reset_supply(s):
     ready = bool(s['first'] and s['second']) and (s['phase'] == 1 or s['reviewed'])
@@ -263,6 +277,7 @@ def elapsed(s, now=None):
     return s.get('active_elapsed', 0) + (max(0, now - s['active_since']) if s.get('active_since') else 0)
 
 REFLECTIONS = {
+    'valorisation': ('supplier', 'Les biodéchets ont une destination', 'L’équipe achats propose une filière pour les biodéchets triés.', 'Compostage ou méthanisation valorisent les restes. Cela ne rembourse ni le repas acheté ni toutes les ressources utilisées : éviter de jeter reste prioritaire.', 'waste'),
     'preferences': ('students', 'Vos envies deviennent une demande', 'Le courtier et le chef voient les deux menus souhaités.', 'Choisir un plat engage des achats, un budget et des ressources. Une envie peut-elle être satisfaite tous les jours ?', 'cattle'),
     'production': ('supplier', 'Le courtier publie ses offres', 'Les prix des deux menus sont mis à jour avec le choix bio ou conventionnel.', 'Le prix seul ne raconte pas tout : origine, pratiques et traçabilité comptent aussi. Que faudrait-il demander au fournisseur ?', 'farm'),
     'plans': ('manager', 'Deux menus deviennent deux commandes', 'Le courtier reçoit les quantités nécessaires ; les élèves peuvent valider les repas.', 'Comparez le coût et la variété. Deux repas au bœuf utilisent davantage de budget et ont une empreinte climatique élevée par rapport au poulet, à poids égal.', 'cattle'),
@@ -288,7 +303,11 @@ def apply(s, role, action, **values):
         raise ValueError('Le maître lancera la partie après la lecture des fiches.')
     if s.get('reflection'):
         raise ValueError('Pause de lecture : le maître reprend ensuite le jeu.')
-    if action == 'preferences' and role == 'students' and s['phase'] == 1:
+    if action == 'valorisation' and role == 'supplier' and s['phase'] in (2, 4):
+        if values.get('value') not in ('compostage', 'methanisation'):
+            raise ValueError('Choisissez une filière proposée.')
+        s.setdefault('waste_policy', {})[str(s['phase'])] = values['value']
+    elif action == 'preferences' and role == 'students' and s['phase'] == 1:
         choices = [values.get('first'), values.get('second')]
         if any(k not in MENUS or k == 'secours' for k in choices):
             raise ValueError('Choisissez deux menus du catalogue.')
@@ -300,7 +319,7 @@ def apply(s, role, action, **values):
         s['active_since'] = None
     if action in REFLECTIONS:
         _, title, effect, question, photo = REFLECTIONS[action]
-        note = {'role': role, 'title': title, 'effect': effect, 'question': question, 'photo': photo, 'number': len(s.get('notices', [])) + 1}
+        note = {'action': action, 'role': role, 'title': title, 'effect': effect, 'question': question, 'photo': photo, 'number': len(s.get('notices', [])) + 1}
         s.setdefault('notices', []).append(note)
         s['notices'] = s['notices'][-30:]
         s['active_elapsed'] = elapsed(s)

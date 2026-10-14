@@ -8,7 +8,7 @@ def load_cards(revision):
     import climate_cards
     return importlib.reload(climate_cards)
 
-cards = load_cards('abc-cartes-alignees-v13')
+cards = load_cards('abc-cartes-responsable des achats-v16')
 climate_pause, menu_consequences, sourcing_card = cards.climate_pause, cards.menu_consequences, cards.sourcing_card
 final_debate = cards.final_debate
 
@@ -18,7 +18,7 @@ def load_engine(revision):
     import abc_game
     return importlib.reload(abc_game)
 
-engine = load_engine('cantine-v4-pauses')
+engine = load_engine('cantine-v4-responsable des achats')
 Store, MENUS, SERVICES, ROLES = engine.Store, engine.MENUS, engine.SERVICES, engine.ROLES
 PRODUCTION, SERVICE_LABELS, SELF_SERVICE = engine.PRODUCTION, engine.SERVICE_LABELS, engine.SELF_SERVICE
 cost, harvest, waste, stock_saving = engine.cost, engine.harvest, engine.waste, engine.stock_saving
@@ -59,7 +59,7 @@ def compact_table(rows):
 def shared_store(revision):
     return Store()
 
-store = shared_store('cantine-v3-courtier-actions')
+store = shared_store('cantine-v3-responsable des achats-actions')
 # La structure des sessions reste compatible : mettre à jour les méthodes sans effacer les décisions en mémoire.
 store.__class__ = Store
 st.title('🌱 Escape Game A.B.C.')
@@ -112,9 +112,9 @@ def mission(role, s):
     if s.get('reflection'):
         return 'Pause de réflexion', 'Une équipe vient de décider. Lisez la conséquence ; le maître reprend ensuite le jeu.'
     if phase == 1 and not s['first'] and role == 'students':
-        return 'Choisir vos deux menus souhaités', 'Proposez deux repas du catalogue. Le chef et le courtier verront votre demande.'
+        return 'Choisir vos deux menus souhaités', 'Proposez deux repas du catalogue. Le chef et le responsable des achats verront votre demande.'
     if phase == 1 and role == 'manager' and not s['first']:
-        return 'Préparer vos deux menus', 'Vous pouvez commencer avec les prix de référence. Le choix du courtier actualisera ensuite les prix.'
+        return 'Préparer vos deux menus', 'Vous pouvez commencer avec les prix de référence. Le choix du responsable des achats actualisera ensuite les prix.'
     menu = (s['first'] if phase == 1 and s['second'] else s['second'] if phase == 3 and s['reviewed'] else None) if phase in (1, 3) else None
     if phase == 3 and not s['climate_ack']:
         return 'Pause commune : comprendre le climat', 'Lisez les six cartes après le premier repas. Le maître reprendra ensuite la mission du jour 2.'
@@ -125,7 +125,7 @@ def mission(role, s):
     if role == 'master':
         if phase in (1, 3):
             if not s['production']:
-                return 'Le courtier prépare ses offres', 'Il choisit son fournisseur de légumes et l’origine de la viande. Le chef préparera ensuite les deux menus ensemble.'
+                return 'Le responsable des achats prépare ses offres', 'Il choisit son fournisseur de légumes et l’origine de la viande. Le chef préparera ensuite les deux menus ensemble.'
             if not menu:
                 return 'Attendre les deux menus' if phase == 1 else 'Attendre la révision du jour 2', 'Le chef prépare les deux repas à l’avance, puis réexamine le deuxième après les restes du premier service.'
             pending = [ROLES[r] for r in ('supplier', 'students') if not s['approvals'][r]]
@@ -134,7 +134,7 @@ def mission(role, s):
     if phase in (1, 3):
         if role == 'supplier':
             if not s['production']:
-                return 'Choisir vos fournisseurs', 'Vous êtes courtier : vous choisissez des fournisseurs. Publiez vos prix ; les quantités et les disponibilités des deux repas seront ensuite calculées automatiquement.'
+                return 'Choisir vos fournisseurs', 'Vous gérez le budget et les achats de la cantine. Publiez vos prix ; les quantités et les disponibilités des deux repas seront ensuite calculées automatiquement.'
             if not menu:
                 return 'Préparer les deux livraisons', 'Attendez les deux menus du chef ; entre les deux jours, attendez sa confirmation ou sa modification du menu du lendemain.'
             if s['approvals']['supplier']:
@@ -148,14 +148,14 @@ def mission(role, s):
             return 'Votre commande est réalisable', 'Cliquez sur « Confirmer la livraison ». Le chef cuisinier et les élèves verront votre accord.'
         if role == 'manager':
             if not s['production']:
-                return 'Attendre les offres du courtier', 'Le courtier choisit les fournisseurs ; vous pourrez ensuite préparer les deux menus.'
+                return 'Attendre les offres du responsable des achats', 'Le responsable des achats choisit les fournisseurs ; vous pourrez ensuite préparer les deux menus.'
             if not menu:
-                return ('Préparer les deux repas', 'Choisissez le menu du jour 1 et celui du jour 2 : variez les plats et vérifiez le budget total, puis envoyez les deux commandes.') if phase == 1 else ('Revoir le menu du jour 2', 'Comparez le menu prévu avec les restes du jour 1, le stock utilisable et l’alerte. Confirmez ou modifiez ce menu pour lancer la nouvelle vérification du courtier.')
+                return ('Préparer les deux repas', 'Choisissez le menu du jour 1 et celui du jour 2 : variez les plats et vérifiez le budget total, puis envoyez les deux commandes.') if phase == 1 else ('Revoir le menu du jour 2', 'Comparez le menu prévu avec les restes du jour 1, le stock utilisable et l’alerte. Confirmez ou modifiez ce menu pour lancer la nouvelle vérification du responsable des achats.')
             pending = [ROLES[r] for r in ('supplier', 'students') if not s['approvals'][r]]
             return ('Menu enregistré', 'Votre budget est calculé. Attendez : ' + ', '.join(pending) + '.') if pending else ('Commande validée', 'Tous ont donné leur accord. Le maître peut cliquer sur « Suivant ».')
         if not menu:
             return 'Attendre le menu', 'Le chef cuisinier va préparer les deux repas. Il apparaîtra ici ; vous pourrez alors donner votre avis.'
-        return ('Votre avis est enregistré', 'Attendez la fin de la mission du courtier et la suite donnée par le maître.') if s['approvals']['students'] else ('Donner l’avis des convives', 'Lisez le menu, imaginez votre plateau et échangez dans votre équipe. Validez le repas proposé, ou demandez un changement au chef cuisinier avant de valider.')
+        return ('Votre avis est enregistré', 'Attendez la fin de la mission du responsable des achats et la suite donnée par le maître.') if s['approvals']['students'] else ('Donner l’avis des convives', 'Lisez le menu, imaginez votre plateau et échangez dans votre équipe. Validez le repas proposé, ou demandez un changement au chef cuisinier avant de valider.')
     if role == 'students':
         return ('Vos choix de cantine sont enregistrés', 'Les restes simulés et leur coût sont calculés. Le chef lit le bilan avant la suite.') if s['service'] else ('Comme à la cantine', 'Choisissez comment demander votre plat selon votre faim, puis comment prendre entrée et dessert en libre-service. Lisez les explications avant de choisir.')
     if role == 'manager':
@@ -179,20 +179,31 @@ def show_mission(role, s):
 def supplier_panel(s):
     phase = s['phase']
     if phase in (2, 4):
-        st.write('Votre mission de livraison est terminée. Préparez votre offre pour le prochain repas en observant les restes. Aucun calcul supplémentaire à cette manche.')
+        st.subheader('Responsable des achats · Budget et destination des biodéchets')
+        st.write('Les déchets ne sont pas tous recyclables de la même façon. Les restes alimentaires triés vont vers une filière adaptée ; les emballages suivent leurs propres consignes. Les déchets des plateaux ne retournent pas en cuisine.')
+        chosen = s.get('waste_policy', {}).get(str(phase))
+        if chosen:
+            st.success('Filière retenue : ' + chosen + '. La priorité reste de prévenir le gaspillage.')
+        else:
+            value = st.radio('Filières fictivement disponibles dans le jeu', ['compostage', 'methanisation'], format_func=lambda k: 'Compostage : transformer les biodéchets en amendement pour les sols' if k == 'compostage' else 'Méthanisation : produire du biogaz et un digestat valorisable sous conditions')
+            if st.button('Choisir la filière de valorisation', type='primary'):
+                act('valorisation', value=value)
+        with st.expander('Lire les rejets aliment par aliment'):
+            cards.abc_chef(s)
         return
     if phase not in (1, 3):
         return
     if not s['production']:
+        st.info('Votre équipe organise les achats : budget, catalogue et contraintes d’approvisionnement. Votre mission est de rendre les commandes du chef réalisables.')
         st.subheader('1 · Vos offres de fournisseur')
         if s.get('preferences'):
             st.info('Demande des élèves : ' + ' ; '.join(MENUS[k][0] for k in s['preferences']))
         if s['first'] and s['second']:
             st.info('Commande du chef : ' + ' ; '.join(MENUS[s[k]['id']][0] for k in ('first', 'second')))
             compact_table([{'Produit': k, 'Quantité (kg)': v} for k, v in requirements(s).items()])
-        st.write('Vous êtes courtier, pas agriculteur : vous choisissez des fournisseurs. Dans ce scénario fictif, l’offre bio est plus chère. Les frais de culture du tableau expliquent le prix du producteur ; ce ne sont pas vos frais de courtier.')
+        st.write('Vous gérez les achats de la cantine : choisissez les offres, vérifiez les commandes du chef et le budget. Dans ce scénario fictif, l’offre bio est plus chère. Les frais de culture du tableau expliquent le prix du producteur ; ce ne sont pas vos frais de responsable des achats.')
         compact_table([{'Mode': v['name'], 'Coût pommes de terre €/kg': v['potato_cost'], 'Vente pommes de terre €/kg': v['potato_price'], 'Coût carottes €/kg': v['carrot_cost'], 'Vente carottes €/kg': v['carrot_price']} for v in PRODUCTION.values()])
-        sourcing_card()
+        cards.purchase_posters()
         with st.form('production'):
             mode = st.radio('Votre choix', list(PRODUCTION), format_func=lambda k: PRODUCTION[k]['name'])
             source = st.radio('Fournisseur de poulet pour 600 portions (72 kg)', ['regional', 'importe'], format_func=lambda k: 'Régional : 576 €, livraison J+1' if k == 'regional' else 'Importé : 432 €, livraison J+2')
@@ -241,6 +252,8 @@ def supplier_panel(s):
 
 def manager_panel(s):
     phase = s['phase']
+    with st.expander('Préparer demain avec les rejets de notre cantine', expanded=phase == 3):
+        cards.abc_chef(s)
     if phase in (1, 3):
         menu = s['first' if phase == 1 else 'second']
         if menu and s['second'] and (phase != 3 or s['reviewed']):
@@ -278,7 +291,7 @@ def manager_panel(s):
 
 def plan_two_days(s):
     st.subheader('Préparer les deux repas à l’avance')
-    st.write('Un repas doit nourrir, donner envie de manger et respecter le budget. Le courtier doit connaître vos deux commandes pour réserver les bons produits.')
+    st.write('Un repas doit nourrir, donner envie de manger et respecter le budget. Le responsable des achats doit connaître vos deux commandes pour réserver les bons produits.')
     compact_table([
         {'Repère': 'Légumes et fruits', 'Pourquoi ?': 'Varier les goûts et apporter notamment des fibres et vitamines.', 'Dans le jeu': 'Légumes dans les plats ; fruits et entrées dans la base fixe.'},
         {'Repère': 'Féculents', 'Pourquoi ?': 'Apporter de l’énergie ; privilégier aussi les versions complètes ou semi-complètes.', 'Dans le jeu': 'Pommes de terre ou riz.'},
@@ -296,7 +309,7 @@ def plan_two_days(s):
         first = st.selectbox('Jour 1 · Menu', options, format_func=lambda k: MENUS[k][0])
         second = st.selectbox('Jour 2 · Menu prévu', ['vegetal'] + [k for k in options if k != 'vegetal'], format_func=lambda k: MENUS[k][0])
         st.caption('Variez les deux journées. Après le jour 1, vous pourrez revoir le second menu grâce aux mesures de restes et aux nouvelles disponibilités.')
-        if st.form_submit_button('Envoyer les deux menus au courtier', type='primary'):
+        if st.form_submit_button('Envoyer les deux menus au responsable des achats', type='primary'):
             act('plans', first=first, second=second)
 
 def menu_picker(s):
@@ -315,7 +328,7 @@ def menu_picker(s):
         st.write(f'Hier : {s["day1"]["waste"]} kg de restes comestibles, soit {s["day1"]["waste"] * 1000 / 600:g} g par élève. Utilisez cette observation pour adapter le service, présenter le plat et éviter de trop acheter.')
         st.info('Stock fictif utilisable de la veille : 12 kg de pommes de terre crues et 9 kg de carottes crues, non servies et conservées dans des conditions adaptées. Ce stock était déjà acheté avant les deux repas du jeu. Il est distinct des déchets des plateaux, qui ne sont pas remis en cuisine.')
     st.subheader('Comparer les repas pour 600 convives')
-    st.caption('Base fixe de 540 € incluse. Les prix tiennent compte du choix du courtier et des aléas.')
+    st.caption('Base fixe de 540 € incluse. Les prix tiennent compte du choix du responsable des achats et des aléas.')
     compact_table([{'Menu': MENUS[m][0], 'Prix (€)': cost(m, event, s['production'], beef_source=s['beef_source']), 'Budget restant sur deux repas (€)': 3000 - spent - cost(m, event, s['production'], beef_source=s['beef_source'])} for m in options])
     st.caption('Aucun calcul à saisir : le budget s’actualise avec votre proposition.')
     with st.form('menu_' + str(phase)):
@@ -323,15 +336,16 @@ def menu_picker(s):
         reuse = st.checkbox('Utiliser le stock de légumes crus de la veille dans ce menu') if phase == 3 and event != 'inondation' else False
         if phase == 3:
             st.caption('Menu régional : 12 kg de pommes de terre déjà en stock, donc 108 kg à commander. Autres menus avec carottes : 9 kg déjà en stock, donc 81 kg à commander. La réduction de dépense sera affichée après votre proposition. Le menu de réserve utilise ses propres stocks.')
-            adaptation = st.radio('Pour mieux satisfaire les convives demain', ['Présenter le plat et proposer de goûter', 'Prévoir des portions selon la faim et un complément', 'Conserver le service prévu'])
+            adaptation = st.radio('Pour mieux satisfaire les convives demain', ['Préparer autrement le stock cru utilisable : soupe ou légumes rôtis', 'Choisir une autre recette et acheter les ingrédients manquants', 'Présenter le plat et proposer de goûter', 'Prévoir des portions selon la faim et un complément', 'Conserver le service prévu'])
         if st.form_submit_button('Proposer ce menu', type='primary'):
             act('menu', value=choice, reuse=reuse, adaptation=adaptation if phase == 3 else None)
-    st.caption('Après votre proposition : le courtier vérifie sa récolte ; les élèves donnent leur avis ; le maître lance la suite.')
+    st.caption('Après votre proposition : le responsable des achats vérifie sa récolte ; les élèves donnent leur avis ; le maître lance la suite.')
 
 def students_panel(s):
     phase = s['phase']
     if phase in (1, 3):
         if phase == 1 and not s.get('preferences'):
+            st.caption('Le menu A.B.C. reprend paupiette, chou-fleur et pommes noisettes observés au collège. Après votre choix, les cartes montreront les rejets et les avis des élèves.')
             if s.get('preferences'):
                 st.success('Vos souhaits sont transmis : ' + ' ; '.join(MENUS[k][0] for k in s['preferences']))
             with st.form('preferences'):
@@ -489,7 +503,7 @@ def game():
         compact_table([{'Journée': day, 'Restes (kg)': s[key]['waste'], 'Par convive (g)': s[key]['waste'] * 1000 / 600, 'Valeur estimée des restes (€)': round(s[key]['cost'] * s[key]['waste'] / 300)} for day, key in [('Jour 1', 'day1'), ('Jour 2', 'day2')]])
         change = s['day1']['waste'] - s['day2']['waste']
         st.write(f'Évolution : {change:g} kg de restes en moins.' if change >= 0 else f'Évolution : {-change:g} kg de restes en plus. Qu’est-ce qui pourrait être amélioré ?')
-        st.write('Quel choix a réduit les restes ? Quelle difficulté a rencontré le courtier ? Que changeriez-vous à votre vraie cantine ?')
+        st.write('Quel choix a réduit les restes ? Quelle difficulté a rencontré le responsable des achats ? Que changeriez-vous à votre vraie cantine ?')
         if s.get('final_card_visible'):
             final_debate(s, role, act)
         elif role != 'master':
@@ -502,7 +516,7 @@ def game():
             if m and m.get('adaptation'):
                 st.write('Amélioration proposée par le chef : ' + m['adaptation'])
         if phase in (1, 3):
-            st.write('Courtier : ' + ('✓ livraison confirmée' if s['approvals']['supplier'] else 'mission en cours') + ' · Élèves : ' + ('✓ avis validé' if s['approvals']['students'] else 'avis attendu'))
+            st.write('Responsable des achats : ' + ('✓ livraison confirmée' if s['approvals']['supplier'] else 'mission en cours') + ' · Élèves : ' + ('✓ avis validé' if s['approvals']['students'] else 'avis attendu'))
         if s['service']:
             st.write('Plat : ' + SERVICE_LABELS[s['service']])
             st.write('Entrées et desserts : ' + SELF_SERVICE[s['self_service']][0])

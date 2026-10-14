@@ -105,3 +105,14 @@ Chaque décision validée concernant demandes, offres, menus, service, livraison
 Les fiches de choix comparent prix et composante viande de l’empreinte climatique à partir de moyennes ADEME, non de mesures propres aux fournisseurs fictifs. Le transport moyen est déjà inclus ; il n’est pas ajouté une seconde fois. Une origine lointaine ne suffit pas à classer deux produits.
 
 Une projection pédagogique répète les deux repas 90 fois/an (180 jours de cantine). Elle compare les dépenses à 1, 2 et 4 ans à prix constants à deux menus au poulet régional conventionnel. Les émissions cumulées de la viande chiffrée sont présentées à 1, 4 et 10 ans. Il ne s’agit ni d’un plan alimentaire recommandé ni d’une prévision des prix, des degrés de réchauffement ou d’une catastrophe locale. Les autres composantes non chiffrées ne sont pas présentées comme nulles.
+
+
+## Lien avec les observations A.B.C. du collège
+
+Le troisième rôle est affiché « Responsable des achats ». Il conserve les offres et disponibilités et peut proposer une filière de valorisation des biodéchets. Aucun organisme réel n’est associé à ce rôle.
+
+Les captures du collège J. Giono consultées le 14 octobre 2026 illustrent les observations du 1er octobre : paupiette (30 portions, 67 % mangé), chou-fleur (14 portions, 26 %), pommes noisettes (16 portions, 87 %). Les motifs sont conservés dans les captures et les cartes. Les tableaux sont des observations d’échantillons, pas un recensement de tous les convives.
+
+Le menu A.B.C. est une adaptation fictive : 1 380 euros, 600 portions avec 120 g de paupiette préparée, 150 g de gratin et 200 g de pommes noisettes. Le scénario applique les rejets observés (33 %, 74 %, 13 %) à ces quantités, soit environ 106 kg, puis simule les effets du service. Les quantités et la réponse aux améliorations ne sont pas mesurées au collège.
+
+Les kilos attribués aux aliments par A.B.C. et le carbone affiché dans les captures restent explicitement des estimations. Le facteur paupiette affiché est un repli générique ; le chou-fleur cuit ne couvre pas la recette complète avec béchamel. Ils ne deviennent pas des facteurs scientifiques propres à ces plats. Les déchets de plateaux ne sont pas réutilisés en cuisine ; seuls les stocks crus non servis prévus par le scénario peuvent être mobilisés. Compostage et méthanisation ne suppriment pas le gaspillage initial.
