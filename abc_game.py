@@ -185,7 +185,7 @@ def apply_core(s, role, action, **values):
             raise ValueError('Action inconnue.')
         return
     if s['phase'] == 3 and not s['climate_ack']:
-        raise ValueError('Lisez les cartes : le maître va reprendre la mission.')
+        raise ValueError('Lisez les cartes : le maître du jeu va reprendre la mission.')
     if action == 'debate' and s['phase'] == 5 and role in ('students', 'manager', 'supplier'):
         if values.get('value') not in ('A', 'B', 'C', 'D', 'E') or values.get('reason') not in ('Budget de la cantine', 'Émissions de gaz à effet de serre', 'Lien avec les producteurs proches', 'Variété des repas', 'Informations et traçabilité'):
             raise ValueError('Choisissez une proposition et un argument.')
@@ -323,11 +323,11 @@ def apply(s, role, action, **values):
         s.update(reflection=None, active_since=time.time())
         return
     if not s.get('game_started', True):
-        raise ValueError('Le maître lancera la partie après la lecture des fiches.')
+        raise ValueError('Le maître du jeu lancera la partie après la lecture des fiches.')
     if s.get('crisis_pause') and not (role == 'master' and action == 'crisis_resume'):
-        raise ValueError('Discussion climatique : seul le maître peut reprendre le jeu.')
+        raise ValueError('Discussion climatique : seul le maître du jeu peut reprendre le jeu.')
     if s.get('reflection'):
-        raise ValueError('Pause de lecture : le maître reprend ensuite le jeu.')
+        raise ValueError('Pause de lecture : le maître du jeu reprend ensuite le jeu.')
     if action == 'crisis_offer' and role == 'supplier' and s['phase'] == 3 and s['event'] == 'secheresse':
         if values.get('value') not in ('espagne', 'argentine', 'reserve') or s.get('crisis_recipe'):
             raise ValueError('Choisissez une offre avant la recette du chef.')
@@ -338,7 +338,7 @@ def apply(s, role, action, **values):
     if action == 'crisis_recipe' and role == 'manager' and s['phase'] == 3 and s['event'] == 'secheresse':
         recipe = values.get('value')
         if recipe not in CRISIS_RECIPES or not s.get('crisis_offer') or not s['climate_ack']:
-            raise ValueError('Attendez le choix des achats et la reprise du maître.')
+            raise ValueError('Attendez le choix des achats et la reprise du maître du jeu.')
         # Toute tomate achetée reste payée même si elle n’entre pas dans cette recette.
         purchase = {'espagne': 135, 'argentine': 108, 'reserve': 0}[s['crisis_offer']]
         price = CRISIS_RECIPES[recipe][1] + purchase
