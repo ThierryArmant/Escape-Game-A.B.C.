@@ -193,6 +193,12 @@ def welcome_cards():
         st.write('**Océans :** le CO₂ se dissout dans l’eau. Les échanges et la circulation océanique participent à son stockage ; les organismes marins interviennent aussi dans le cycle du carbone. L’absorption de CO₂ contribue à l’acidification des océans : cette aide au climat a des conséquences sur la vie marine.')
         st.caption('Un puits de carbone absorbe davantage de carbone qu’il n’en libère. Ces parts sont des moyennes sur une période précise : elles changent d’une année à l’autre. Elles ne signifient pas que chaque repas est automatiquement compensé.')
         st.markdown('[Océans et acidification — NOAA](https://www.noaa.gov/education/resource-collections/ocean-coasts/ocean-acidification)')
+        st.subheader('30 juillet 2026 · Le Jour du dépassement mondial')
+        st.write('Imaginez un budget nature prévu pour douze mois. Dès la fin juillet, notre demande a atteint ce que la Terre peut renouveler en une année. Nous continuons ensuite à consommer en entamant les réserves naturelles et en accumulant notamment du CO₂.')
+        st.info('Les forêts et les océans absorbent du carbone, mais notre demande dépasse la capacité de renouvellement de la planète. À la cantine, éviter le gaspillage et comparer les menus aide à réduire cette demande.')
+        st.caption('Indicateur calculé par Global Footprint Network : ressources biologiques et services écologiques, dont l’absorption du CO₂. Ce n’est pas la date où toutes les ressources sont épuisées, ni un budget de CO₂ uniquement. Date mondiale pour 2026, pas une date propre au collège.')
+        st.markdown('[Date et méthode — Global Footprint Network](https://overshoot.footprintnetwork.org/newsroom/press-release-june-2026-english/)')
+
     st.info('Chef : préparer deux menus. Élèves : exprimer vos envies. Courtier : consulter vos offres, puis répondre aux demandes. Les choix sont proposés par le jeu : aucun calcul à saisir.')
 
 def reflection_card(note, s, is_master, resume):
