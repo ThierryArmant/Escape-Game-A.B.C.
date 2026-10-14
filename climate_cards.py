@@ -206,7 +206,12 @@ def reflection_card(note, s, is_master, resume):
     st.warning('⏸ Pause commune · Le chronomètre est arrêté sur tous les écrans.')
     st.caption('Décision transmise par : ' + {'manager': 'le chef cuisinier', 'students': 'les élèves', 'supplier': 'le responsable des achats'}.get(note['role'], 'le maître'))
     render_photo_card(note['number'], note['photo'], 'Une décision → des effets', 'Lire · comprendre · en discuter', note['title'], note['effect'], note['question'], 'A.B.C. · Conséquences du scénario et repères sourcés', None, 'Prix, stocks et restes : simulation. Repères climatiques : sources ci-dessous.')
-    if note['role'] in ('students', 'manager'):
+    if note.get('action') == 'plans':
+        menu_climate_cards()
+        with st.expander('Analyse des menus et observations de notre cantine'):
+            chef_nutrition(s)
+            abc_observations()
+    elif note['role'] in ('students', 'manager'):
         abc_observations()
     if note['role'] == 'supplier' and note['photo'] == 'farm':
         purchase_reveal(s)
@@ -327,3 +332,57 @@ def purchase_reveal(s):
     elif actual:
         carbon_comparison()
     st.write('**Un achat a plusieurs effets :** dépense immédiate, variété des repas, conditions de production, traçabilité, transport et émissions. Une offre proche n’est pas automatiquement moins carbonée qu’une autre viande importée.')
+
+SCHOOL_NUTRITION_URL = 'https://www.legifrance.gouv.fr/loda/id/JORFTEXT000024614763'
+
+def chef_nutrition(s):
+    st.markdown(STYLE, unsafe_allow_html=True)
+    st.subheader('Chef · Nourrir, varier, respecter le cadre')
+    st.markdown('''<section class="abc-carbon"><h3>Comprendre les proportions, sans calculer des grammes</h3>
+<p>Exemple illustratif : sur 100 parts d’énergie dans une journée</p>
+<div style="display:flex;border-radius:12px;overflow:hidden;min-height:50px;font:700 16px system-ui">
+<div style="width:50%;background:#f4c45c;color:#183d34;padding:10px">50 % glucides</div>
+<div style="width:35%;background:#85cbb4;color:#183d34;padding:10px">35 % lipides</div>
+<div style="width:15%;background:#c8b0e5;color:#183d34;padding:10px">15 % protéines</div></div>
+<div class="values" style="margin-top:12px"><div class="value">Glucides<br><small>Énergie pour bouger et réfléchir : riz, pommes de terre, pain…</small></div><div class="value">Lipides<br><small>Énergie, cellules : huiles, beurre, matières grasses des aliments…</small></div><div class="value">Protéines<br><small>Grandir et renouveler les tissus : lentilles, viande, poisson, produits laitiers…</small></div></div></section>''', unsafe_allow_html=True)
+    st.caption('50/35/15 est une illustration de lecture des pourcentages, pas une obligation réglementaire par repas ni le calcul de vos menus. Ce sont des parts d’énergie, pas des parts du poids ou de la surface de l’assiette. Les besoins varient avec l’âge et l’activité ; les aliments apportent souvent plusieurs nutriments.')
+    with st.expander('Les contraintes réelles du chef, expliquées simplement'):
+        st.write('À la cantine, un déjeuner comprend un plat principal, une garniture, un produit laitier et une entrée et/ou un dessert. La variété est contrôlée sur 20 repas successifs : deux menus seuls ne permettent pas de déclarer un plan conforme.')
+        st.write('Exemple sur 20 repas : 10 accompagnements avec des légumes cuits autres que les légumes secs, et 10 avec légumes secs, féculents ou céréales. Il existe aussi des fréquences pour les crudités, fruits et produits laitiers, ainsi que des limites concernant certaines préparations grasses ou sucrées.')
+        st.caption('Les pourcentages de glucides, lipides et protéines ne remplacent pas ces règles. Pour connaître la répartition réelle d’un menu, il faut toutes ses recettes, ingrédients et portions ; ils ne sont pas tous renseignés dans le jeu.')
+        st.markdown('[Règles de restauration scolaire — arrêté du 30 septembre 2011](' + SCHOOL_NUTRITION_URL + ') · [Repères 4–17 ans — Manger Bouger](' + NUTRITION_URL + ')')
+    if not s.get('first') or not s.get('second'):
+        return
+    st.subheader('Votre analyse rapide des deux menus')
+    first, second = s['first']['id'], s['second']['id']
+    st.success('✓ Les plats proposés associent une source de protéines, des légumes et un accompagnement énergétique. Le scénario comprend aussi un produit laitier, une entrée et/ou un dessert, du pain et de l’eau dans la base fixe.')
+    if first == second:
+        st.warning('À améliorer : les deux plats sont identiques. Essayez une autre recette au deuxième repas pour varier goûts et aliments.')
+    else:
+        st.success('✓ Vous proposez deux plats différents.')
+    if first in ('boeuf', 'boeuf_bresil', 'boeuf_argentine', 'abc_cantine') and second in ('boeuf', 'boeuf_bresil', 'boeuf_argentine', 'abc_cantine'):
+        st.warning('À revoir : du bœuf aux deux repas. Varier les sources de protéines est utile ; le menu de lentilles est une autre possibilité. Ce signal n’est pas, à lui seul, une infraction à la réglementation.')
+    if 'abc_cantine' in (first, second):
+        st.warning('À vérifier dans la recette A.B.C. : béchamel, farce et préparation des pommes noisettes influencent les lipides. Leur nom seul ne permet pas de calculer une proportion fiable. Le chou-fleur très rejeté appelle aussi une adaptation de préparation ou de portion.')
+    if 'vegetal' in (first, second) or 'secours' in (first, second):
+        st.success('✓ Les lentilles apportent des protéines et des fibres. Le riz complète le plat ; ce choix permet de varier les sources de protéines.')
+    total = s['first']['cost'] + s['second']['cost']
+    if total > 3000:
+        st.error(f'Budget dépassé de {total-3000:g} € : modifiez l’un des deux menus avant la commande.')
+    else:
+        st.success(f'✓ Budget respecté : {3000-total:g} € restent disponibles sur les deux repas.')
+    st.caption('Analyse pédagogique du catalogue, pas un bilan nutritionnel calculé ni une certification de conformité. Les repas doivent être mangés pour que leurs apports profitent aux élèves.')
+
+def menu_climate_cards():
+    st.markdown(STYLE, unsafe_allow_html=True)
+    st.subheader('Pause commune · Nos gestes dépassent le plateau')
+    definitions = [
+        ('waste', '8 à 10 %', 'des émissions mondiales de gaz à effet de serre sont liées aux pertes et au gaspillage alimentaires', 'Jeter un repas, c’est gaspiller sa fabrication', 'Cultiver, élever, transporter, conserver et cuisiner mobilise de l’énergie et émet des gaz à effet de serre. Si le repas est jeté, ces ressources n’ont pas servi à nourrir quelqu’un. Le CO₂ contribue au réchauffement ; le méthane de l’élevage et de certains déchets compte aussi.', 'Notre levier : prendre à sa faim et ajuster les achats.', 'PNUE · Food Waste Index 2024', UNEP_URL, 'Repère mondial, toutes pertes et gaspillage compris ; pas le pourcentage d’émissions du collège. Photo de biodéchets contenant aussi des parties non comestibles.'),
+        ('water', '≈ 7 parts sur 10', 'des prélèvements mondiaux d’eau douce servent à l’agriculture', 'L’eau a travaillé avant notre repas', 'L’eau permet de produire les aliments. Jeter une nourriture comestible rend inutile une partie des ressources mobilisées pour elle. L’agriculture représente environ 72 % des prélèvements mondiaux d’eau douce, principalement pour irriguer.', 'Notre levier : éviter de produire et acheter des quantités qui seront jetées.', 'FAO · AQUASTAT et gestion de l’eau agricole', 'https://www.fao.org/land-water/water/agricultural-water-management/water-accounting/en', 'Prélèvements, pas consommation nette ni eau gaspillée. Ce repère ne dit pas combien de litres contient l’empreinte d’une assiette. Photo illustrative du Mékong.'),
+        ('farm', '40 % du pain laissé', 'dans les portions scannées A.B.C. sur deux jours au collège J. Giono', 'Un morceau de pain a une histoire', 'Avant le pain : cultiver des céréales, récolter, moudre, transporter et cuire. Dans les 35 portions de pain observées par A.B.C., environ 60 % étaient mangés en moyenne. Chaque morceau évité dans la poubelle limite le gaspillage de cette chaîne.', 'Notre levier : prendre un morceau, puis se resservir si on a encore faim.', 'A.B.C. · observations du collège consultées le 14 octobre 2026', 'https://thierryarmant.github.io/E3D-cantine/', 'Échantillon de 35 portions sur deux jours, pas tous les convives. Photo illustrative d’une récolte de pommes de terre, pas de céréales. Les kilos et émissions attribués au pain par l’application sont des estimations.'),
+    ]
+    for index, (column, args) in enumerate(zip(st.columns(3), definitions), 1):
+        with column:
+            render_photo_card(index, *args)
+    st.info('Produire inutilement ajoute des émissions et une pression sur les ressources. Cela contribue au problème climatique à grande échelle ; les restes de ce repas ne provoquent pas directement la sécheresse du jeu.')
+    st.caption('Cartes A.B.C. originales : aucune reproduction des textes ou visuels de La Fresque du Climat.')

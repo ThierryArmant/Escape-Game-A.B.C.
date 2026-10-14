@@ -92,9 +92,16 @@ if 'auth' not in st.session_state:
 
 auth = st.session_state.auth
 st.info(f"{ROLES[auth['role']]} · Code : {auth['code']}")
-if st.button('Quitter cet écran'):
-    del st.session_state.auth
-    st.rerun()
+if auth['role'] == 'master':
+    if st.button('Arrêter et remettre la partie à zéro'):
+        try:
+            store.action(auth, 'reset_game')
+            st.session_state.pop('abc_error', None)
+            st.session_state.pop('mission_context', None)
+            st.session_state.pop('mission_pending', None)
+            st.rerun()
+        except ValueError as exc:
+            st.error(str(exc))
 
 def act(action, **values):
     try:
@@ -252,6 +259,7 @@ def supplier_panel(s):
 
 def manager_panel(s):
     phase = s['phase']
+    cards.chef_nutrition(s)
     with st.expander('Préparer demain avec les rejets de notre cantine', expanded=phase == 3):
         cards.abc_chef(s)
     if phase in (1, 3):
@@ -296,7 +304,7 @@ def plan_two_days(s):
         {'Repère': 'Légumes et fruits', 'Pourquoi ?': 'Varier les goûts et apporter notamment des fibres et vitamines.', 'Dans le jeu': 'Légumes dans les plats ; fruits et entrées dans la base fixe.'},
         {'Repère': 'Féculents', 'Pourquoi ?': 'Apporter de l’énergie ; privilégier aussi les versions complètes ou semi-complètes.', 'Dans le jeu': 'Pommes de terre ou riz.'},
         {'Repère': 'Sources de protéines variées', 'Pourquoi ?': 'Alterner les aliments : la viande n’est pas nécessaire tous les jours.', 'Dans le jeu': 'Un jour avec volaille, un autre avec lentilles.'},
-        {'Repère': 'Eau et accompagnements', 'Pourquoi ?': 'Prévoir aussi l’eau et les autres composantes du repas.', 'Dans le jeu': 'Entrée, fruit ou produit laitier et pain sont inclus dans la base fixe.'},
+        {'Repère': 'Eau et accompagnements', 'Pourquoi ?': 'Prévoir aussi l’eau et les autres composantes du repas.', 'Dans le jeu': 'Entrée et/ou dessert, produit laitier, pain et eau sont inclus dans la base fixe.'},
     ])
     st.caption('Ces repères expliquent les choix du jeu ; deux menus ne suffisent pas à valider un plan alimentaire scolaire réel. L’équilibre s’apprécie sur plusieurs repas.')
     st.markdown('[Repères pour les 4–17 ans — Manger Bouger](' + NUTRITION_URL + ')')

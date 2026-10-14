@@ -289,6 +289,10 @@ REFLECTIONS = {
 }
 
 def apply(s, role, action, **values):
+    if action == 'reset_game' and role == 'master':
+        s.clear()
+        s.update(initial())
+        return
     if action == 'start_game' and role == 'master':
         if s.get('game_started', True):
             raise ValueError('La partie a déjà commencé.')

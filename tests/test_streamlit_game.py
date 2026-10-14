@@ -133,3 +133,18 @@ class AbcMenuTests(unittest.TestCase):
         apply(s,'supplier','valorisation',value='compostage')
         self.assertEqual(s['waste_policy']['2'],'compostage')
         self.assertEqual(s['reflection']['role'],'supplier')
+
+class MasterResetTests(unittest.TestCase):
+    def test_reset_during_pause_keeps_role_access(self):
+        store=Store();master=store.create();pupil=store.join(master['code'],'students')
+        store.action(master,'start_game')
+        store.action(pupil,'preferences',first='abc_cantine',second='vegetal')
+        with self.assertRaises(ValueError):store.action(pupil,'reset_game')
+        store.action(master,'reset_game')
+        state=store.read(pupil)
+        self.assertFalse(state['game_started'])
+        self.assertIsNone(state['reflection'])
+        self.assertIsNone(state['preferences'])
+        self.assertEqual(state['phase'],1)
+        store.action(master,'start_game')
+        self.assertTrue(store.read(pupil)['game_started'])
