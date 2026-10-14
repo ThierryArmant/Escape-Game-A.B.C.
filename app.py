@@ -8,7 +8,7 @@ def load_cards(revision):
     import climate_cards
     return importlib.reload(climate_cards)
 
-cards = load_cards('abc-cartes-responsable des achats-v16')
+cards = load_cards('abc-cartes-nutrition-climat-v20')
 climate_pause, menu_consequences, sourcing_card = cards.climate_pause, cards.menu_consequences, cards.sourcing_card
 final_debate = cards.final_debate
 
@@ -18,7 +18,7 @@ def load_engine(revision):
     import abc_game
     return importlib.reload(abc_game)
 
-engine = load_engine('cantine-v4-responsable des achats')
+engine = load_engine('cantine-v4-grouped-first-effect')
 Store, MENUS, SERVICES, ROLES = engine.Store, engine.MENUS, engine.SERVICES, engine.ROLES
 PRODUCTION, SERVICE_LABELS, SELF_SERVICE = engine.PRODUCTION, engine.SERVICE_LABELS, engine.SELF_SERVICE
 cost, harvest, waste, stock_saving = engine.cost, engine.harvest, engine.waste, engine.stock_saving
