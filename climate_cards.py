@@ -20,24 +20,24 @@ def photo_data(key):
     return 'data:image/jpeg;base64,' + base64.b64encode((PHOTO_ROOT / (key + '.jpg')).read_bytes()).decode('ascii')
 
 STYLE = '''<style>
-.abc-photo-card{border-radius:22px;overflow:hidden;background:#fff;border:1px solid #dce5d9;box-shadow:0 12px 32px rgba(20,57,43,.09);margin:0 0 24px;color:#183d34}
-.abc-photo-card .visual{height:225px;position:relative;overflow:hidden;background:#d9e6d8}
+.abc-photo-card{border-radius:14px;overflow:hidden;background:#fff;border:1px solid #dce5d9;box-shadow:0 12px 32px rgba(20,57,43,.09);margin:0 0 12px;color:#183d34}
+.abc-photo-card .visual{height:110px;position:relative;overflow:hidden;background:#d9e6d8}
 .abc-photo-card img{width:100%;height:100%;object-fit:cover;display:block}
 .abc-photo-card .visual:after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(14,35,26,.6))}
 .abc-photo-card .tag{position:absolute;top:16px;left:16px;background:#fff3dc;color:#674923;border-radius:30px;font:700 12px system-ui;padding:8px 12px;z-index:1}
-.abc-photo-card .body{padding:24px 25px 22px}
-.abc-photo-card .figure{font:800 clamp(32px,4vw,46px) system-ui;color:#245b48;line-height:1.05;margin:0 0 9px}
-.abc-photo-card .unit{font:600 14px system-ui;color:#547466;margin:0 0 19px;line-height:1.5}
-.abc-photo-card h3{font:700 23px system-ui;line-height:1.2;margin:0 0 12px}
-.abc-photo-card p{font:16px/1.6 system-ui;margin:0 0 15px}
-.abc-photo-card .action{background:#edf5e9;border-left:4px solid #568f58;padding:12px 14px;border-radius:8px;font:600 14px/1.5 system-ui}
-.abc-photo-card .source{font:12px/1.6 system-ui;color:#607268;margin-top:16px}
+.abc-photo-card .body{padding:12px 15px}
+.abc-photo-card .figure{font:800 clamp(23px,2.5vw,30px) system-ui;color:#245b48;line-height:1.05;margin:0 0 9px}
+.abc-photo-card .unit{font:600 14px system-ui;color:#547466;margin:0 0 9px;line-height:1.5}
+.abc-photo-card h3{font:700 19px system-ui;line-height:1.2;margin:0 0 12px}
+.abc-photo-card p{font:15px/1.35 system-ui;margin:0 0 9px}
+.abc-photo-card .action{background:#edf5e9;border-left:4px solid #568f58;padding:8px 10px;border-radius:8px;font:600 14px/1.35 system-ui}
+.abc-photo-card .source{font:12px/1.6 system-ui;color:#607268;margin-top:8px}
 .abc-photo-card a{color:#356a57;text-decoration:underline}
-.abc-carbon{background:#173e34;color:#fff;border-radius:20px;padding:24px;margin:0 0 20px}
+.abc-carbon{background:#173e34;color:#fff;border-radius:20px;padding:14px;margin:0 0 12px}
 .abc-carbon h3{color:#fff;margin:0 0 12px;font:700 22px system-ui}
 .abc-carbon .values{display:flex;gap:14px;flex-wrap:wrap}
-.abc-carbon .value{flex:1;min-width:125px;background:#ffffff12;border-radius:12px;padding:16px}
-.abc-carbon strong{font:800 32px system-ui;display:block;color:#f2d392}
+.abc-carbon .value{flex:1;min-width:125px;background:#ffffff12;border-radius:12px;padding:10px}
+.abc-carbon strong{font:800 25px system-ui;display:block;color:#f2d392}
 .abc-carbon small{display:block;margin-top:6px;line-height:1.5}
 </style>'''
 
@@ -50,7 +50,7 @@ def render_photo_card(index, key, number, unit, title, text, action, source_labe
 <div class="visual"><img src="{photo_data(key)}" alt="{e(title,quote=True)}"><span class="tag">CARTE {index:02d} · A.B.C.</span></div>
 <div class="body"><div class="figure">{e(number)}</div><div class="unit">{e(unit)}</div>
 <h3>{e(title)}</h3><p>{e(text)}</p><div class="action">{e(action)}</div>
-<div class="source">{source}<br>{e(note)}<br><a href="{e(credits['source'],quote=True)}" target="_blank">{e(attribution)}</a></div></div></article>''', unsafe_allow_html=True)
+<details class="source"><summary>Sources et précisions</summary>{source}<br>{e(note)}<br><a href="{e(credits['source'],quote=True)}" target="_blank">{e(attribution)}</a></details></div></article>''', unsafe_allow_html=True)
 
 
 def carbon_comparison():
@@ -79,10 +79,10 @@ def climate_pause(day1, is_master, resume, menus=None):
         ('water', 'L’eau circule', 'évaporation → nuages → précipitations → sols et cours d’eau', 'Le réchauffement modifie le cycle de l’eau', 'Un climat plus chaud modifie l’évaporation et les précipitations. Les changements dépendent des régions : certains lieux risquent davantage de manquer d’eau, d’autres de subir des pluies intenses.', 'Votre levier : anticiper les risques et garder des alternatives.', 'GIEC · Eau, impacts et adaptation', WATER_URL, 'Photo illustrative du Mékong, au Laos ; elle ne représente pas la sécheresse fictive du jeu.'),
         ('drought', '−50 %', 'de carottes disponibles au jour 2 dans la simulation', 'La sécheresse atteint votre prochain menu', 'Dans le jeu, l’offre de carottes passe de 90 à 45 kg. Le courtier doit trouver un complément et le chef peut changer sa recette. Les quantités et les surcoûts du jeu sont fictifs.', 'Votre levier : revoir ensemble menu, portions et approvisionnement.', 'Scénario A.B.C. · hypothèse pédagogique', None, 'Photo réelle de sol sec à Chowilla, en Australie ; ce n’est pas la ferme fictive du jeu.'),
     ]
-    for offset in range(0, len(definitions), 2):
-        for column, args in zip(st.columns(2), definitions[offset:offset+2]):
-            with column:
-                render_photo_card(offset + list(definitions[offset:offset+2]).index(args) + 1, *args)
+    tabs = st.tabs(['1 · Produire', '2 · Gaspiller', '3 · Viande', '4 · Climat', '5 · Eau', '6 · Sécheresse'])
+    for index, (tab, args) in enumerate(zip(tabs, definitions), 1):
+        with tab:
+            render_photo_card(index, *args)
     st.info(f'Votre jour 1 : {day1["waste"]} kg de restes comestibles simulés. Le chiffre du jeu et les chiffres mondiaux ci-dessus ne décrivent pas la même échelle.')
     if menus and sum(m in ('boeuf', 'boeuf_bresil', 'boeuf_argentine') for m in menus) == 2:
         st.warning('Votre prévision contenait du bœuf aux deux repas. Une offre moins chère peut résoudre le budget sans supprimer les émissions liées à l’élevage. Vous pouvez varier le jour 2.')
@@ -174,7 +174,7 @@ def welcome_cards():
     st.markdown(STYLE, unsafe_allow_html=True)
     st.subheader('Avant de jouer · La cantine commence bien avant le plateau')
     st.write('Lisez ces trois fiches pendant que les autres équipes se connectent. Le maître lancera ensuite le jeu. Le chronomètre ne tourne pas encore.')
-    a, b, c = st.columns(3)
+    a, b, c = st.tabs(['1 · Agriculture', '2 · Déforestation', '3 · Du champ au plateau'])
     with a:
         render_photo_card(1, 'farm', 'Cultiver et élever', 'Des activités humaines pour nous nourrir', 'D’où vient notre repas ?', 'Les légumes poussent dans les champs. Les animaux ont besoin de nourriture. Produire demande des sols, de l’eau et de l’énergie ; l’élevage de ruminants émet aussi du méthane, un gaz à effet de serre.', 'À observer : quel plat choisir, et pour combien de convives ?', 'GIEC · Synthèse 2023', IPCC_URL)
     with b:
@@ -228,7 +228,7 @@ def long_term_choices(menus):
     total = sum(m['cost'] for m in menus)
     reference = 2 * engine.cost('regional')
     saving = reference - total
-    with st.expander('Si ces choix se répètent : 1 à 4 ans, puis au-delà', expanded=True):
+    with st.expander('Si ces choix se répètent : 1 à 4 ans, puis au-delà', expanded=False):
         st.write('**Court terme : les dépenses.** Imaginons 180 jours de cantine par an, soit 90 répétitions de vos deux repas, toujours pour 600 convives. Comparaison : deux menus au poulet régional conventionnel à 2 880 € au total. Cette référence sert à comparer les prix ; ce n’est pas un modèle de variété alimentaire.')
         st.table([{'Horizon': f'{years} an(s)', 'Dépenses simulées (€)': round(total * 90 * years), 'Économie face à la référence (€), négatif = surcoût': round(saving * 90 * years)} for years in (1, 2, 4)])
         st.caption('Projection pédagogique à prix constants : aucune inflation, aucun changement de fréquentation. Les prix sont fictifs. Le menu ne devrait pas rester identique toute l’année. La valeur des restes reste comprise dans les achats : on ne la retranche pas une seconde fois.')
