@@ -30,7 +30,7 @@ st.set_page_config(page_title='Escape Game A.B.C.', page_icon='🌱', layout='wi
 
 # Compact layout for 13–14 inch school tablets; touch controls stay usable.
 st.markdown("""<style>
-[data-testid="stMainBlockContainer"]{padding:1rem 1.2rem 2rem;max-width:1480px}
+[data-testid="stMainBlockContainer"]{zoom:.85;padding:1rem 1.2rem 2rem;max-width:1740px}
 [data-testid="stVerticalBlock"]{gap:.55rem}
 h1{font-size:1.7rem!important;padding:.2rem 0!important}
 h2{font-size:1.35rem!important;padding:.2rem 0!important}
@@ -41,9 +41,9 @@ h3{font-size:1.1rem!important;padding:.15rem 0!important}
 [data-testid="stMetricLabel"] p{font-size:.85rem}
 [data-testid="stTable"] td,[data-testid="stTable"] th{padding:.3rem .45rem;font-size:.85rem;line-height:1.25}
 [data-testid="stForm"]{padding:.6rem}
-[data-testid="stButton"] button,[data-testid="stFormSubmitButton"] button{min-height:44px;padding:.35rem .7rem}
-[data-testid="stRadio"] label{min-height:40px}
-[data-testid="stDialog"] [role="dialog"]{max-height:85dvh;overflow-y:auto}
+[data-testid="stButton"] button,[data-testid="stFormSubmitButton"] button{min-height:52px;padding:.35rem .7rem}
+[data-testid="stRadio"] label{min-height:48px}
+[data-testid="stDialog"] [role="dialog"]{zoom:.85;max-height:90dvh;overflow-y:auto}
 @media(max-width:900px){[data-testid="stMainBlockContainer"]{padding:.65rem .7rem 1.5rem}}
 </style>""", unsafe_allow_html=True)
 
