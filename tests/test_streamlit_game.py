@@ -35,7 +35,7 @@ class ChoiceGameTests(unittest.TestCase):
         store.action(master,'next')
         state=store.read(master);self.assertEqual(state['phase'],3);self.assertIsNone(state['event']);self.assertEqual(state['day1']['waste'],60)
         self.assertIsNotNone(state['second'])
-        with self.assertRaises(ValueError):store.action(r['manager'],'menu',value='vegetal')
+        self.assertTrue(state['climate_ack'])  # No second compulsory discussion.
         store.action(master,'event',value='secheresse')
         self.assertTrue(store.read(master)['crisis_pause'])
         with self.assertRaises(ValueError):store.action(r['supplier'],'crisis_offer',value='espagne')
@@ -149,3 +149,27 @@ class MasterResetTests(unittest.TestCase):
         self.assertEqual(state['phase'],1)
         store.action(master,'start_game')
         self.assertTrue(store.read(pupil)['game_started'])
+
+
+class CrisisCoherenceTests(unittest.TestCase):
+    def test_argentine_beef_replaces_chicken_once(self):
+        from abc_game import initial, apply, crisis_cost, requirements
+        s = initial(); s.update(game_started=True, phase=3, event='secheresse', climate_ack=True, first={'id':'regional','cost':1440}, crisis_offer='argentine')
+        apply(s, 'manager', 'crisis_recipe', value='chou_puree')
+        self.assertEqual(crisis_cost('chou_puree','argentine'),1134)
+        self.assertEqual(s['second']['cost'],1134)
+        self.assertEqual(requirements(s)['Bœuf'],72)
+        self.assertNotIn('Poulet',requirements(s))
+        self.assertTrue(s['approvals']['supplier'])
+        self.assertFalse(s['approvals']['students'])
+    def test_pause_preserves_abc_and_clock(self):
+        from abc_game import initial, apply
+        s=initial();s.update(game_started=True,phase=3,climate_ack=True,day1={'waste':106,'cost':1380},session_since=123)
+        before=dict(s['day1'])
+        apply(s,'master','event',value='secheresse')
+        with self.assertRaises(ValueError):apply(s,'supplier','crisis_offer',value='espagne')
+        with self.assertRaises(ValueError):apply(s,'students','crisis_resume')
+        apply(s,'master','crisis_resume')
+        self.assertEqual(s['day1'],before)
+        self.assertEqual(s['session_since'],123)
+        self.assertTrue(s['climate_ack'])

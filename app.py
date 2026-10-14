@@ -18,8 +18,8 @@ def load_cards(revision):
 def load_engine(revision):
     return isolated_module('abc_game.py', revision)
 
-cards = load_cards('abc-cartes-secheresse-v23-safe')
-engine = load_engine('cantine-v5-manual-drought-safe')
+cards = load_cards('abc-cartes-claires-v24-safe')
+engine = load_engine('cantine-v6-clear-drought-safe')
 cards.GAME_ENGINE = engine
 climate_pause, menu_consequences, sourcing_card = cards.climate_pause, cards.menu_consequences, cards.sourcing_card
 final_debate = cards.final_debate
@@ -147,12 +147,27 @@ def act(action, **values):
         st.session_state.abc_error = str(exc)
         st.rerun()
 
+def menu_label(menu):
+    return menu.get('display_name', MENUS[menu['id']][0])
+
 def mission(role, s):
     phase = s['phase']
     if not s.get('game_started', True):
         return 'Avant le départ', 'Lisez les trois fiches. Le maître du jeu lance le jeu lorsque les équipes sont installées.'
     if s.get('reflection'):
         return 'Pause de réflexion', 'Une équipe vient de décider. Lisez la conséquence ; le maître du jeu reprend ensuite le jeu.'
+    if phase == 3 and s.get('event') == 'secheresse':
+        if role == 'supplier':
+            return ('Choisir une offre', 'Comparez prix et carbone, puis transmettez une seule offre au chef.') if not s.get('crisis_offer') else ('Offre transmise', 'Le chef choisit la préparation ; lisez les cartes pendant son travail.')
+        if role == 'manager':
+            if not s.get('crisis_offer'):
+                return 'Attendre l’offre', 'Le négociateur compare les achats. Consultez la carte chou-fleur.'
+            return ('Transformer le chou-fleur', 'Comparez trois préparations et leur coût, puis proposez le repas aux élèves.') if not s.get('reviewed') else ('Repas envoyé', 'Les élèves donnent leur avis. Consultez les fiches pendant l’attente.')
+        if role == 'students':
+            if not s.get('crisis_recipe'):
+                return 'Comprendre les choix', 'Les achats et le chef préparent leur proposition. Consultez les cartes A.B.C.'
+            return ('Donner votre avis', 'Discutez de la préparation proposée, puis validez ce repas.') if not s['approvals']['students'] else ('Avis enregistré', 'Le maître du jeu poursuit lorsque tout le monde est prêt.')
+        return 'Acheter moins cher ou réduire notre empreinte carbone ?', 'Les équipes choisissent l’offre, la recette et l’avis des convives. Vous pilotez la suite.'
     if phase == 1 and not s['first'] and role == 'students':
         return 'Choisir vos deux menus souhaités', 'Proposez deux repas du catalogue. Le chef et le responsable des achats verront votre demande.'
     if phase == 1 and role == 'manager' and not s['first']:
@@ -245,7 +260,7 @@ def supplier_panel(s):
         if s.get('preferences'):
             st.info('Demande des élèves : ' + ' ; '.join(MENUS[k][0] for k in s['preferences']))
         if s['first'] and s['second']:
-            st.info('Commande du chef : ' + ' ; '.join(MENUS[s[k]['id']][0] for k in ('first', 'second')))
+            st.info('Commande du chef : ' + ' ; '.join(menu_label(s[k]) for k in ('first', 'second')))
             compact_table([{'Produit': k, 'Quantité (kg)': v} for k, v in requirements(s).items()])
         st.write('Vous gérez les achats de la cantine : choisissez les offres, vérifiez les commandes du chef et le budget. Dans ce scénario fictif, l’offre bio est plus chère. Les frais de culture du tableau expliquent le prix du producteur ; ce ne sont pas vos frais de responsable des achats.')
         compact_table([{'Mode': v['name'], 'Coût pommes de terre €/kg': v['potato_cost'], 'Vente pommes de terre €/kg': v['potato_price'], 'Coût carottes €/kg': v['carrot_cost'], 'Vente carottes €/kg': v['carrot_price']} for v in PRODUCTION.values()])
@@ -313,8 +328,8 @@ def manager_panel(s):
         menu = s['first' if phase == 1 else 'second']
         if menu and s['second'] and (phase != 3 or s['reviewed']):
             if phase == 1:
-                st.write('Menu du jour 2 déjà prévu : ' + MENUS[s['second']['id']][0])
-            st.success(f'Menu proposé : {MENUS[menu["id"]][0]} · {menu["cost"]} €.')
+                st.write('Menu du jour 2 déjà prévu : ' + menu_label(s['second']))
+            st.success(f'Menu proposé : {menu_label(menu)} · {menu["cost"]} €.')
             if phase == 3 and menu.get('reuse'):
                 st.write(f'Le stock utilisable réduit les nouveaux achats de {stock_saving(menu["id"], s["event"], s["production"]):g} €.')
             if menu.get('adaptation'):
@@ -355,7 +370,7 @@ def plan_two_days(s):
     ])
     st.caption('Ces repères expliquent les choix du jeu ; deux menus ne suffisent pas à valider un plan alimentaire scolaire réel. L’équilibre s’apprécie sur plusieurs repas.')
     st.markdown('[Repères pour les 4–17 ans — Manger Bouger](' + NUTRITION_URL + ')')
-    options = [k for k in MENUS if k != 'secours']
+    options = [k for k in MENUS if k != 'secours' and k not in engine.CRISIS_RECIPES]
     if s.get('preferences'):
         st.info('Menus souhaités par les élèves : ' + ' ; '.join(MENUS[k][0] for k in s['preferences']))
     compact_table([{'Plat proposé': MENUS[m][0], 'Prix pour 600 repas (€)': cost(m, mode=s['production'] or 'conventionnel', beef_source=s['beef_source'])} for m in options])
@@ -404,7 +419,7 @@ def students_panel(s):
             if s.get('preferences'):
                 st.success('Vos souhaits sont transmis : ' + ' ; '.join(MENUS[k][0] for k in s['preferences']))
             with st.form('preferences'):
-                options = [k for k in MENUS if k != 'secours']
+                options = [k for k in MENUS if k != 'secours' and k not in engine.CRISIS_RECIPES]
                 first = st.selectbox('Votre plat souhaité au jour 1', options, format_func=lambda k: MENUS[k][0])
                 second = st.selectbox('Votre plat souhaité au jour 2', ['vegetal'] + [k for k in options if k != 'vegetal'], format_func=lambda k: MENUS[k][0])
                 st.caption('Le chef doit aussi tenir compte du budget, de la variété et des offres. Ce sont des souhaits, pas encore la commande.')
@@ -415,9 +430,9 @@ def students_panel(s):
         if menu and s['second'] and (phase != 3 or s['reviewed']):
             st.subheader('Vos deux repas prévus' if phase == 1 else 'Le repas révisé du jour 2')
             if phase == 1:
-                st.write('Jour 1 : ' + MENUS[s['first']['id']][0])
-                st.write('Jour 2 : ' + MENUS[s['second']['id']][0])
-            st.write(MENUS[menu['id']][0])
+                st.write('Jour 1 : ' + menu_label(s['first']))
+                st.write('Jour 2 : ' + menu_label(s['second']))
+            st.write(menu_label(menu))
             if menu.get('adaptation'):
                 st.info('Le chef propose pour demain : ' + menu['adaptation'])
             if menu.get('reuse'):
@@ -498,7 +513,7 @@ def master_projection(s):
                 elif role == 'manager':
                     for field, day in [('first', 1), ('second', 2)]:
                         if s[field]:
-                            st.write(f'Jour {day} : ' + MENUS[s[field]['id']][0])
+                            st.write(f'Jour {day} : ' + menu_label(s[field]))
                             st.caption(f"Coût : {s[field]['cost']:g} €")
                     if not s['first']:
                         st.info('Deux menus à préparer.')
@@ -536,18 +551,18 @@ def game():
         st.error(str(exc))
         return
     role, phase = auth['role'], s['phase']
-    if role == 'master' and s.get('game_started', True) and not s.get('reflection'):
+    if role == 'master' and s.get('game_started', True) and phase in (1, 2, 3) and not s.get('event'):
+        if st.button('🌵 Déclencher la sécheresse et ouvrir la discussion', type='primary', disabled=bool(s.get('reflection'))):
+            act('event', value='secheresse')
+    if role == 'master' and s.get('game_started', True) and not s.get('reflection') and not s.get('crisis_pause'):
         master_projection(s)
-    seconds = max(0, 1800 - int(engine.elapsed(s)))
-    st.caption(f'Temps de jeu actif : {seconds // 60} min {seconds % 60:02d} s · Les pauses de lecture ne sont pas décomptées.')
+    seconds = max(0, 1200 - int(time.time() - (s.get('session_since') or s['started']))) if s.get('game_started', True) else 1200
+    st.caption(f'Séance de 20 minutes, discussion comprise · Temps restant : {seconds // 60} min {seconds % 60:02d} s')
     if not s.get('game_started', True):
         if role == 'master' and st.button('Démarrer le jeu pour toutes les équipes', type='primary'):
             act('start_game')
         cards.welcome_cards()
         return
-    if role == 'master' and phase in (1, 2, 3) and not s.get('event') and not s.get('reflection'):
-        if st.button('🌵 Déclencher la sécheresse et ouvrir la discussion', type='primary'):
-            act('event', value='secheresse')
     if s.get('crisis_pause'):
         cards.drought_discussion(s)
         if role == 'master' and st.button('Reprendre le jeu après les discussions', type='primary'):
@@ -572,8 +587,7 @@ def game():
     context = (auth['code'], role, phase, s['event'], title, instruction, str(s['first']), str(s['second']), s['service'], s['self_service'], s['climate_ack'], s['waste_reviewed'], s.get('debate_decision'), s.get('final_card_visible', False))
     if st.session_state.get('mission_context') != context:
         st.session_state.mission_context = context
-        st.session_state.mission_pending = True
-        st.rerun()
+        # La consigne reste visible ; seule une demande d’aide ouvre une fenêtre.
     if st.button('❓ Que doit faire mon équipe ?'):
         st.session_state.mission_pending = True
         st.rerun()
@@ -620,6 +634,8 @@ def game():
         supplier_panel(s)
     elif role == 'students':
         students_panel(s)
+    if role != 'master':
+        cards.waiting_cards(s, role)
     if phase == 5:
         cards.choice_footprint(s)
         st.success('Les deux journées sont terminées. Chaque équipe a contribué !')
@@ -635,7 +651,7 @@ def game():
         st.write('Offre légumes : ' + (PRODUCTION[s['production']]['name'] if s['production'] else 'À choisir'))
         for k, label in [('first', 'Premier repas'), ('second', 'Prochain repas')]:
             m = s[k]
-            st.write(label + ' : ' + (f'{MENUS[m["id"]][0]} · {m["cost"]} €' if m else 'À proposer'))
+            st.write(label + ' : ' + (f'{menu_label(m)} · {m["cost"]} €' if m else 'À proposer'))
             if m and m.get('adaptation'):
                 st.write('Amélioration proposée par le chef : ' + m['adaptation'])
         if phase in (1, 3):

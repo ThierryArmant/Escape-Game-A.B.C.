@@ -65,7 +65,7 @@ def carbon_comparison():
     st.caption('Valeurs moyennes : ADEME / Impact CO₂, Agribalyse 3.2, mise à jour du 15 janvier 2025. Pour comprendre : 1 kg de bœuf ≈ 28 kg CO₂e ; 1 kg de poulet ≈ 4,56 kg CO₂e.')
     st.markdown('[Bœuf](' + BEEF_URL + ') · [Porc](' + PORK_URL + ') · [Poulet](' + CHICKEN_URL + ')')
     st.info('À poids égal : une portion de bœuf ≈ les émissions de six portions de poulet. On compare ici leur impact climatique, pas les portions à manger.')
-    st.caption('Ces références ne mesurent pas précisément le bœuf du Brésil ou d’Argentine, le porc du Ventoux ou votre fournisseur. Le poisson varie beaucoup selon l’espèce, la pêche ou l’élevage : aucun chiffre unique n’est attribué au poisson générique du jeu.')
+    st.caption('Ces références ne mesurent pas précisément nos fournisseurs. Repère lieu jaune ou colin cru : 12,1 kg CO₂e/kg ; il ne représente pas tous les poissons blancs.')
 
 
 def climate_pause(day1, is_master, resume, menus=None):
@@ -227,7 +227,7 @@ def reflection_card(note, s, is_master, resume):
     else:
         st.info('Lisez la fiche et échangez dans votre équipe. Le maître du jeu reprend le jeu lorsque vous êtes prêts.')
 
-MEAT_FACTORS = {'boeuf': 28, 'boeuf_bresil': 28, 'boeuf_argentine': 28, 'regional': 4.56, 'importe': 4.56, 'porc_ventoux': 6.67}
+MEAT_FACTORS = {'boeuf': 28, 'boeuf_bresil': 28, 'boeuf_argentine': 28, 'regional': 4.56, 'importe': 4.56, 'porc_ventoux': 6.67, 'poisson': 12.1}
 
 def choice_footprint(s):
     engine = GAME_ENGINE
@@ -247,13 +247,13 @@ def choice_footprint(s):
         with column:
             if factor is not None:
                 km = round(72 * factor / .142 / 100) * 100
-                key = 'cattle' if menu['id'] in ('boeuf', 'boeuf_bresil', 'boeuf_argentine') else 'pig' if menu['id'] == 'porc_ventoux' else 'chicken'
-                render_photo_card(1, key, f'≈ {km:,} km'.replace(',', ' '), 'en voiture diesel : autant d’émissions que la viande pour 600 élèves', engine.MENUS[menu['id']][0], 'Ce chiffre compare les émissions de la viande à celles d’une voiture. Les aliments n’ont pas parcouru cette distance !', 'Le type de viande change beaucoup l’empreinte. Comparez les kilomètres.', 'ADEME · Impact CO₂ / Agribalyse 3.2', BEEF_URL if key == 'cattle' else PORK_URL if key == 'pig' else CHICKEN_URL, '600 portions de 120 g ; viande seule. Valeur moyenne, pas mesure du fournisseur. Voiture diesel moyenne à 142 g CO₂e/km. Kilomètres arrondis à la centaine.')
+                key = 'cattle' if menu['id'] in ('boeuf', 'boeuf_bresil', 'boeuf_argentine') else 'pig' if menu['id'] == 'porc_ventoux' else 'water' if menu['id'] == 'poisson' else 'chicken'
+                render_photo_card(1, key, f'≈ {km:,} km'.replace(',', ' '), 'en voiture diesel : autant d’émissions que la protéine animale pour 600 élèves', engine.MENUS[menu['id']][0], 'Ce chiffre compare les émissions de la viande à celles d’une voiture. Les aliments n’ont pas parcouru cette distance !', 'Le type de viande change beaucoup l’empreinte. Comparez les kilomètres.', 'ADEME · Impact CO₂ / Agribalyse 3.2', BEEF_URL if key == 'cattle' else PORK_URL if key == 'pig' else COLIN_URL if key == 'water' else CHICKEN_URL, '600 portions de 120 g ; viande seule. Valeur moyenne, pas mesure du fournisseur. Voiture diesel moyenne à 142 g CO₂e/km. Kilomètres arrondis à la centaine.')
             else:
                 st.info(engine.MENUS[menu['id']][0] + ' : recette complète nécessaire pour donner un équivalent kilométrique fiable.')
     with st.expander('Chiffres et méthode de comparaison'):
         st.table(rows)
-        st.caption('600 portions de 120 g = 72 kg de viande. Facteurs moyens ADEME : bœuf 28 ; porc 6,67 ; poulet 4,56 kg CO₂e/kg. Trajet illustratif de 800 km, voiture diesel moyenne à 142 g CO₂e/km. Viande seule : ce n’est pas l’empreinte complète du repas. Ces valeurs de cycle de vie incluent déjà le transport moyen : il ne faut pas l’ajouter une deuxième fois.')
+        st.caption('600 portions de 120 g = 72 kg de viande. Facteurs moyens ADEME : bœuf 28 ; porc 6,67 ; poulet 4,56 ; lieu jaune ou colin cru 12,1 kg CO₂e/kg. Trajet illustratif de 800 km, voiture diesel moyenne à 142 g CO₂e/km. Viande seule : ce n’est pas l’empreinte complète du repas. Ces valeurs de cycle de vie incluent déjà le transport moyen : il ne faut pas l’ajouter une deuxième fois.')
     st.markdown('[Bœuf](' + BEEF_URL + ') · [Porc](' + PORK_URL + ') · [Poulet](' + CHICKEN_URL + ') · [Voiture](https://impactco2.fr/outils/transport/voiturethermique)')
     st.info('Proche ou lointain ? Un poulet importé garde ici le repère moyen du poulet, et un bœuf local le repère moyen du bœuf. Nous ne connaissons pas l’empreinte précise de ces fournisseurs. Pour les départager, il faudrait leurs pratiques, l’alimentation des animaux, le mode de transport et les garanties contre la déforestation.')
     st.write('**Les émissions s’additionnent :** cultures et alimentation des animaux, élevage, changements d’usage des terres, énergie, transport, conservation et cuisine. Ce sont plusieurs gaz : CO₂, méthane et protoxyde d’azote notamment. Le CO₂e permet de comparer leurs effets. Les activités qui émettent renforcent l’effet de serre naturel ; l’accumulation du CO₂ contribue au réchauffement durable.')
@@ -399,69 +399,111 @@ def menu_climate_cards():
     st.caption('Cartes A.B.C. originales : aucune reproduction des textes ou visuels de La Fresque du Climat.')
 
 
+COLIN_URL = 'https://impactco2.fr/outils/alimentation/lieu'
+TOMATO_URL = 'https://impactco2.fr/outils/fruitsetlegumes/tomate'
+
+
+def protein_reference():
+    st.markdown('### Repères réels · Pour 1 kg d’aliment')
+    a, b, c = st.columns(3)
+    a.metric('Bœuf', '28 kg CO₂e')
+    b.metric('Colin · lieu jaune cru', '12,1 kg CO₂e')
+    c.metric('Poulet', '4,56 kg CO₂e')
+    st.caption('Impact CO₂ / ADEME · Agribalyse 3.2, 15/01/2025. Moyennes de référence, pas mesures de nos fournisseurs. Le repère colin désigne le lieu jaune cru : à vérifier pour le poisson réellement servi.')
+    st.write('Réduire le gaspillage ou varier les protéines peut aussi permettre d’économiser et de réduire les émissions. Vérifiez la composition du repas et ce qui est mangé.')
+    with st.expander('Sources des données carbone'):
+        st.markdown(f'[Bœuf]({BEEF_URL}) · [Poulet]({CHICKEN_URL}) · [Lieu jaune ou colin cru]({COLIN_URL})')
+        st.write('À poids égal, ce colin a une empreinte inférieure au bœuf et supérieure au poulet. Le poisson blanc ne constitue pas une catégorie carbone unique.')
+        st.markdown(f'[Tomate de saison]({TOMATO_URL}) : 0,626 kg CO₂e/kg, référence générique. Ce chiffre ne permet pas de départager un fournisseur provençal et un fournisseur espagnol. Il faut leurs conditions de culture et de transport ; aucun indice par pays n’est inventé.')
+
+
+def illustrated_card(filename):
+    path = Path(__file__).parent / 'assets' / 'cards' / filename
+    if path.exists():
+        st.image(str(path), width='stretch')
+
+
 def drought_discussion(s):
-    st.subheader('🌵 Catastrophe climatique · Vague de sécheresse')
-    st.warning('Dans notre scénario, le dérèglement climatique lié au renforcement de l’effet de serre a favorisé une très longue sécheresse. Les agriculteurs touchés ont perdu leur récolte de tomates ; leurs dépenses étaient déjà engagées.')
-    poster = Path(__file__).parent / 'assets' / 'cards' / 'secheresse-chef.jpg'
-    if poster.exists():
-        st.image(str(poster), width='stretch')
-    else:
-        st.image(str(PHOTO_ROOT / 'drought.jpg'), width='stretch')
-    st.table([
-        {'Production': 'Tomate provençale de saison, sans serre chauffée', 'Avant la crise (€/kg)': '2,50', 'Après la crise (€/kg)': '6,00 · stock régional de remplacement limité', 'Indice CO₂e du scénario': '1'},
-        {'Production': 'Tomate espagnole de saison, sans serre chauffée, camion', 'Avant la crise (€/kg)': '—', 'Après la crise (€/kg)': '1,50 · offre promotionnelle', 'Indice CO₂e du scénario': '2'},
-        {'Production': 'Tomate argentine de saison, bateau et camion', 'Avant la crise (€/kg)': '—', 'Après la crise (€/kg)': '1,20 · offre promotionnelle', 'Indice CO₂e du scénario': '3'},
-    ])
-    st.caption('Prix et indices entièrement fictifs pour le débat : aucun de ces indices n’est une mesure ADEME ni une valeur en kg CO₂e. La saison, la culture, le chauffage des serres et le transport comptent ; la provenance seule ne classe pas les empreintes. Le stock espagnol n’est pas supposé touché par cette sécheresse locale.')
-    st.write('**Offre tentante : des légumes espagnols au repas ?** Comparez économie immédiate, délais, émissions et soutien aux agriculteurs. Acheter oblige-t-il le cuisinier à servir le produit ?')
-    abc_chef(s)
+    st.subheader('🌵 Sécheresse · Discussion commune')
+    illustrated_card('secheresse-v24.jpg')
+    st.caption('Prix et délais fictifs du scénario. Les données carbone ci-dessous sont des références réelles sourcées.')
+    st.write('**Dans le scénario :** une longue sécheresse détruit la récolte locale de tomates. Le renforcement de l’effet de serre augmente le risque de sécheresse dans certaines régions ; les dépenses des agriculteurs étaient déjà engagées.')
+    protein_reference()
+    st.info('Acheter moins cher ou réduire notre empreinte carbone ? Justifiez votre choix avec le budget, les données carbone et les observations A.B.C.')
     if s.get('crisis_pause'):
-        st.info('Le jeu et son chronomètre sont suspendus. Les menus, les décisions, les mesures et les captures A.B.C. sont conservés. Le maître du jeu reprend après les échanges.')
-    else:
-        st.caption('Dossier commun de lecture : les mesures et les captures A.B.C. sont conservées.')
+        st.caption('Actions suspendues jusqu’à la reprise du maître du jeu. La discussion compte dans les 20 minutes de séance.')
+    with st.expander('Lectures croisées par aliment · Données A.B.C.'):
+        abc_chef(s)
 
 
 def drought_offers(s, act):
-    st.subheader('🛒 Négociateur · Des prix qui bouleversent la commande')
-    st.write('Le fournisseur local a perdu ses tomates. Un stock régional de remplacement coûte 6 €/kg contre 2,50 €/kg auparavant. Voici deux offres tentantes pour 90 kg :')
+    st.subheader('🛒 1 · Choisir l’offre')
+    st.write('Demain = J+1. Les tomates espagnoles arrivent à J+2 : elles ne peuvent pas entrer dans le prochain repas. Le stock régional de tomates est trop limité pour 600 convives ; son tarif passe de 2,50 à 6 €/kg dans le scénario.')
     st.table([
-        {'Offre fictive': 'Espagne · tomates de saison', 'Prix €/kg': 1.50, 'Total €': 135, 'Délai': 'J+1 · disponible pour demain'},
-        {'Offre fictive': 'Argentine · tomates de saison', 'Prix €/kg': 1.20, 'Total €': 108, 'Délai': 'J+2 · indisponible pour demain ; stock pour plus tard'},
-        {'Offre fictive': 'Ne pas acheter de tomate', 'Prix €/kg': '—', 'Total €': 0, 'Délai': 'Adapter le menu avec le stock cru'},
+        {'Offre du scénario': 'Espagne · 90 kg de tomates', '€/kg': '1,50', 'Commande (€)': 135, 'Arrivée': 'J+2 · pour un autre service'},
+        {'Offre du scénario': 'Argentine · 72 kg de bœuf', '€/kg': '6,25', 'Commande (€)': 450, 'Arrivée': 'J+1 · stock déjà en entrepôt européen'},
+        {'Offre du scénario': 'Utiliser le stock de cuisine', '€/kg': '—', 'Commande (€)': 0, 'Arrivée': 'Déjà disponible'},
     ])
-    st.caption('Les offres sont fictives. Les tomates achetées seront payées et resteront en stock : le chef doit préparer une recette sans tomate. Les 90 kg de chou-fleur cru constituent un stock fictif distinct des plateaux A.B.C.')
-    labels = {'espagne': 'Offre espagnole · 135 €', 'argentine': 'Offre argentine · 108 € · pour plus tard', 'reserve': 'Ne pas acheter de tomate · adapter le menu'}
+    st.caption('Prix, stocks et délais fictifs du scénario. Les valeurs carbone sont des références réelles, affichées séparément.')
+    labels = {'espagne': 'Tomates espagnoles pour plus tard · 135 €', 'argentine': 'Bœuf argentin pour le repas ou le stock · 450 €', 'reserve': 'Pas d’achat supplémentaire · stock disponible'}
     if s.get('crisis_recipe'):
-        st.success('Offre retenue : ' + labels[s['crisis_offer']])
+        st.success('Offre transmise : ' + labels[s['crisis_offer']])
         return
-    offer = st.radio('Votre décision d’achat', list(labels), format_func=labels.get, key='drought_offer')
-    if st.button('Enregistrer cette décision d’achat', type='primary'):
+    offer = st.radio('Une seule décision', list(labels), format_func=labels.get, key='drought_offer')
+    if st.button('Transmettre mon offre au chef', type='primary'):
         act('crisis_offer', value=offer)
     if s.get('crisis_offer'):
-        st.success('Décision transmise au chef : ' + labels[s['crisis_offer']])
+        st.success('Le chef peut maintenant choisir sa recette.')
+    with st.expander('Comparer les données carbone réelles'):
+        protein_reference()
 
 
 def drought_chef(s, act):
-    st.subheader('👨‍🍳 Chef · Revoir la recette sans tomate')
-    abc_chef(s)
-    st.markdown('**Tableau détaillé de la capture A.B.C. · Chou-fleur**')
-    st.table([
-        {'Avis dans A.B.C.': 'Pas aimé', 'Portions': 7, 'Part mangée moyenne': '4 %'},
-        {'Avis dans A.B.C.': 'Pas le temps', 'Portions': 4, 'Part mangée moyenne': '40 %'},
-        {'Avis dans A.B.C.': 'Tout fini', 'Portions': 3, 'Part mangée moyenne': '58 %'},
-    ])
-    st.caption('Transcription de la capture : les déclarations et les estimations visuelles peuvent différer. 14 portions, 26 % mangé en moyenne ; ne pas généraliser à toute la cantine.')
-    st.write('Vous avez 90 kg de chou-fleur cru non servi dans le scénario. Il faut le transformer, conserver des légumes et varier le repas. Même si les achats ont retenu des tomates espagnoles, cette recette doit être sans tomate : elles restent en stock pour un autre service.')
-    recipes = GAME_ENGINE.CRISIS_RECIPES
-    purchase = {'espagne': 135, 'argentine': 108, 'reserve': 0}.get(s.get('crisis_offer'), 0)
-    steps = {'chou_veloute': 'Cuire puis mixer avec de l’eau et des aromates ; servir les lentilles et le pain à côté.', 'chou_puree': 'Cuire le chou-fleur et les pommes de terre, écraser ensemble ; accompagner de poulet.', 'chou_galettes': 'Cuire et hacher le chou-fleur, mélanger aux lentilles cuites et former des galettes ; accompagner de riz.'}
-    st.table([{'Recette sans tomate': name, 'Préparation': steps[key], 'Coût complet fictif · 600 repas (€)': price, 'Tomates payées en stock (€)': purchase, 'Budget restant · 2 jours (€)': 3000 - s['first']['cost'] - price - purchase} for key, (name, price) in recipes.items()])
-    st.caption('Prix fictifs incluant le stock de chou-fleur, la base du repas et les ingrédients. 600 repas ; budget alimentaire total 3 000 €. Recettes indicatives : vérifier temps de préparation, matériel, allergènes et équilibre du menu complet. Aucun meilleur taux de consommation n’est garanti.')
+    st.subheader('👨‍🍳 2 · Choisir la préparation')
+    illustrated_card('chef-v24.jpg')
+    st.write('**Demain : sans tomate.** Les tomates achetées arrivent trop tard. Vous disposez de 90 kg de chou-fleur cru non servi dans le scénario ; les restes des plateaux ne retournent jamais en cuisine.')
     if not s.get('crisis_offer'):
-        st.info('Le négociateur doit d’abord enregistrer sa décision.')
+        st.info('Le négociateur choisit son offre. Consultez la carte en attendant.')
         return
-    choice = st.radio('Comment transformer le chou-fleur ?', list(recipes), format_func=lambda k: recipes[k][0], key='drought_recipe')
-    if st.button('Envoyer cette recette et son coût aux équipes', type='primary'):
+    offer = s['crisis_offer']
+    recipes = GAME_ENGINE.CRISIS_RECIPES
+    labels = {key: name.replace('Poulet', 'Bœuf argentin') if offer == 'argentine' and key == 'chou_puree' else name for key, (name, _) in recipes.items()}
+    st.table([{'Repas': labels[key], 'Dépense engagée (€)': GAME_ENGINE.crisis_cost(key, offer), 'Budget restant · 2 jours (€)': 3000 - s['first']['cost'] - GAME_ENGINE.crisis_cost(key, offer)} for key in recipes])
+    st.caption('Dépense fictive : repas de 600 convives et achats supplémentaires, comptés une seule fois. Les tomates arrivant à J+2 sont un achat pour un service ultérieur. Si le bœuf n’est pas utilisé dans la purée, il reste en stock pour un autre service. Le stock cru de chou-fleur est déjà compris dans la simulation.')
+    choice = st.radio('Votre recette', list(recipes), format_func=labels.get, key='drought_recipe')
+    if st.button('Proposer ce repas aux élèves', type='primary'):
         act('crisis_recipe', value=choice)
     if s.get('crisis_recipe'):
-        st.success('Recette envoyée. Le négociateur confirme la livraison ; les élèves donnent leur avis.')
+        st.success('Commande prête. Il reste l’avis des élèves ; le maître du jeu avance ensuite.')
+    with st.expander('Lectures croisées A.B.C. par aliment'):
+        abc_chef(s)
+        st.table([
+            {'Avis sur le chou-fleur': 'Pas aimé', 'Portions': 7, 'Part mangée moyenne': '4 %'},
+            {'Avis sur le chou-fleur': 'Pas le temps', 'Portions': 4, 'Part mangée moyenne': '40 %'},
+            {'Avis sur le chou-fleur': 'Tout fini', 'Portions': 3, 'Part mangée moyenne': '58 %'},
+        ])
+        st.caption('14 portions observées, pas toute la cantine. Déclarations des élèves et estimation visuelle peuvent différer. Une nouvelle recette ne garantit pas une baisse des rejets.')
+
+
+def waiting_cards(s, role):
+    import time
+    p = s['phase']
+    if p in (1, 3):
+        waiting = (bool(s.get('preferences')) and not s.get('second') or s['approvals']['students']) if role == 'students' else (bool(s.get('first') and s.get('second')) and (p == 1 or s.get('reviewed'))) if role == 'manager' else (bool(s.get('production')) and not s.get('first') or s['approvals']['supplier'] or p == 3 and bool(s.get('crisis_offer')) and not s.get('crisis_recipe'))
+    elif p in (2, 4):
+        waiting = bool(s.get('service')) if role == 'students' else bool(s.get('waste_reviewed')) if role == 'manager' else True
+    else:
+        return
+    if not waiting:
+        return
+    st.markdown('### Pendant que les autres équipes décident…')
+    st.caption('Une fiche se renouvelle toutes les 25 secondes. Lecture libre : aucune validation supplémentaire.')
+    facts = [
+        ('waste', '74 % laissés', 'Chou-fleur en gratin · 14 portions A.B.C.', 'Changer la préparation ?', '26 % mangé en moyenne. Sept élèves disent « pas aimé » et quatre « pas le temps ». Cette petite observation aide à choisir une piste, sans expliquer tous les rejets.', 'Préparation, portion ou temps : quelle piste essayer ?', 'Capture A.B.C. · collège J. Giono · 01/10/2026', None, 'Photo illustrative de restes alimentaires. Les proportions concernent uniquement les scans observés.'),
+        ('cattle', '28 kg CO₂e', 'pour 1 kg de bœuf', 'Le prix et le carbone sont deux coûts différents', 'Référence poulet : 4,56 kg CO₂e/kg. Référence lieu jaune ou colin cru : 12,1 kg CO₂e/kg. Le bœuf est le plus émetteur de ces trois références.', 'Quel aliment comparer pour la même quantité ?', 'ADEME · Impact CO₂ · Agribalyse 3.2', BEEF_URL, 'Moyennes de cycle de vie ; pas mesures de fournisseurs. Référence colin : lieu jaune cru, pas tous les poissons blancs. Photo illustrative de bovins.'),
+        ('farm', 'Budget + carbone', 'Acheter moins cher ou réduire notre empreinte carbone ?', 'Chercher une solution commune', 'Un achat moins cher ne garantit pas moins d’émissions. Mais éviter les achats inutiles et les aliments jetés peut réduire la dépense et les ressources mobilisées. Comparez le repas complet et les observations A.B.C.', 'Expliquez un avantage et une contrainte de votre offre.', 'Scénario A.B.C. · comparaison des choix', None, 'Photo illustrative d’une ferme ; elle ne représente pas le fournisseur.'),
+    ]
+    if not s.get('event'):
+        facts[2] = ('chicken', '4,56 kg CO₂e', 'pour 1 kg de poulet', 'Comparer aussi les protéines', 'Le repère moyen du bœuf est 28 kg CO₂e/kg. La quantité et le type d’aliment comptent, en plus du prix et de la provenance.', 'Quel choix de menu peut changer cette empreinte ?', 'ADEME · Impact CO₂ · Agribalyse 3.2', CHICKEN_URL, 'Moyennes de référence. Photo illustrative de poulets ; pas mesure d’un fournisseur.')
+    index = int(time.time() / 25) % len(facts)
+    render_photo_card(index + 1, *facts[index])
