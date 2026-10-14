@@ -167,3 +167,76 @@ def final_debate(s, role, send):
     with st.expander('Sources et hypothèses de la comparaison'):
         st.markdown('[Poulet — ADEME / Agribalyse](' + CHICKEN_URL + ') · [Porc — ADEME / Agribalyse](' + PORK_URL + ') · [Voiture moyenne diesel — ADEME](https://impactco2.fr/outils/transport/voiturethermique)')
         st.write('Calculs automatiques : bœuf 72 × 28 = 2 016 kg CO₂e ; poulet 72 × 4,56 = 328,32 kg CO₂e ; 72 × 6,67 = 480,24 kg CO₂e. Un trajet illustratif est un aller simple d’environ 800 km, avec le facteur de 142 g CO₂e/km. Les équivalents sont arrondis et comparent des cycles de vie. Les prix sont fictifs ; la source carbone est Agribalyse 3.2, mise à jour le 15 janvier 2025.')
+
+FAO_URL = 'https://www.fao.org/forest-resources-assessment/remote-sensing/remote-sensing-survey/en'
+
+def welcome_cards():
+    st.markdown(STYLE, unsafe_allow_html=True)
+    st.subheader('Avant de jouer · La cantine commence bien avant le plateau')
+    st.write('Lisez ces trois fiches pendant que les autres équipes se connectent. Le maître lancera ensuite le jeu. Le chronomètre ne tourne pas encore.')
+    a, b, c = st.columns(3)
+    with a:
+        render_photo_card(1, 'farm', 'Cultiver et élever', 'Des activités humaines pour nous nourrir', 'D’où vient notre repas ?', 'Les légumes poussent dans les champs. Les animaux ont besoin de nourriture. Produire demande des sols, de l’eau et de l’énergie ; l’élevage de ruminants émet aussi du méthane, un gaz à effet de serre.', 'À observer : quel plat choisir, et pour combien de convives ?', 'GIEC · Synthèse 2023', IPCC_URL)
+    with b:
+        render_photo_card(2, 'cattle', 'Presque 9 sur 10', 'des surfaces déboisées sont liées à l’expansion agricole, à l’échelle mondiale en 2000–2018', 'Quand les champs remplacent les forêts', 'Des forêts peuvent être défrichées pour créer des cultures ou des pâturages. Cela libère du carbone et détruit des habitats. Tous les élevages et toutes les cultures ne proviennent pas de terres récemment déboisées.', 'À demander : sait-on comment le fournisseur protège les forêts ?', 'FAO · Enquête mondiale FRA 2020', FAO_URL, 'Photo illustrative d’un pâturage, pas d’une déforestation.')
+    with c:
+        render_photo_card(3, 'waste', 'Du champ au plateau', 'Transporter · conserver · cuisiner · manger', 'Jeter, c’est gaspiller toute cette chaîne', 'Avant la cantine, les aliments ont déjà demandé du travail et des ressources. Le transport et la conservation comptent, mais la distance seule ne suffit pas à classer les aliments selon leur impact climatique.', 'À observer : peut-on prendre à sa faim et éviter les achats inutiles ?', 'ADEME · Impact CO₂ / PNUE', BEEF_URL, 'Les photos sont illustratives ; fiches A.B.C. originales.')
+    st.info('Chef : préparer deux menus. Élèves : exprimer vos envies. Courtier : consulter vos offres, puis répondre aux demandes. Les choix sont proposés par le jeu : aucun calcul à saisir.')
+
+def reflection_card(note, s, is_master, resume):
+    st.markdown(STYLE, unsafe_allow_html=True)
+    st.warning('⏸ Pause commune · Le chronomètre est arrêté sur tous les écrans.')
+    st.caption('Décision transmise par : ' + {'manager': 'le chef cuisinier', 'students': 'les élèves', 'supplier': 'le courtier'}.get(note['role'], 'le maître'))
+    render_photo_card(note['number'], note['photo'], 'Une décision → des effets', 'Lire · comprendre · en discuter', note['title'], note['effect'], note['question'], 'A.B.C. · Conséquences du scénario et repères sourcés', None, 'Prix, stocks et restes : simulation. Repères climatiques : sources ci-dessous.')
+    if s.get('first') and s.get('second'):
+        st.write('**Jour 1 :** ' + __import__('abc_game').MENUS[s['first']['id']][0])
+        st.write('**Jour 2 :** ' + __import__('abc_game').MENUS[s['second']['id']][0])
+        st.metric('Budget restant sur les deux repas', f"{3000 - s['first']['cost'] - s['second']['cost']:g} €")
+    st.markdown('[Agriculture et climat — GIEC](' + IPCC_URL + ') · [Empreinte des aliments — ADEME](' + BEEF_URL + ') · [Déforestation — FAO](' + FAO_URL + ')')
+    if is_master:
+        if st.button('Reprendre le jeu pour toutes les équipes', type='primary'):
+            resume()
+    else:
+        st.info('Lisez la fiche et échangez dans votre équipe. Le maître reprend le jeu lorsque vous êtes prêts.')
+
+MEAT_FACTORS = {'boeuf': 28, 'boeuf_bresil': 28, 'boeuf_argentine': 28, 'regional': 4.56, 'importe': 4.56, 'porc_ventoux': 6.67}
+
+def choice_footprint(s):
+    import abc_game as engine
+    menus = [s[k] for k in ('first', 'second') if s.get(k)]
+    if not menus and s.get('preferences'):
+        menus = [{'id': k, 'cost': engine.cost(k)} for k in s['preferences']]
+    if not menus:
+        return
+    st.subheader('Ce que vos choix engagent · Prix et empreinte climatique')
+    rows = []
+    for index, menu in enumerate(menus, 1):
+        factor = MEAT_FACTORS.get(menu['id'])
+        footprint = 72 * factor if factor is not None else None
+        rows.append({'Journée': index, 'Menu choisi': engine.MENUS[menu['id']][0], 'Coût fictif (€)': menu['cost'], 'Viande seule : kg CO₂e pour 600 portions': round(footprint) if footprint is not None else 'Non chiffré pour cet aliment', 'Équivalent Marseille → Paris en voiture': f'≈ {round(footprint / (.142 * 800))} allers simples' if footprint is not None else '—'})
+    st.table(rows)
+    st.caption('600 portions de 120 g = 72 kg de viande. Facteurs moyens ADEME : bœuf 28 ; porc 6,67 ; poulet 4,56 kg CO₂e/kg. Trajet illustratif de 800 km, voiture diesel moyenne à 142 g CO₂e/km. Viande seule : ce n’est pas l’empreinte complète du repas. Ces valeurs de cycle de vie incluent déjà le transport moyen : il ne faut pas l’ajouter une deuxième fois.')
+    st.markdown('[Bœuf](' + BEEF_URL + ') · [Porc](' + PORK_URL + ') · [Poulet](' + CHICKEN_URL + ') · [Voiture](https://impactco2.fr/outils/transport/voiturethermique)')
+    st.info('Proche ou lointain ? Un poulet importé garde ici le repère moyen du poulet, et un bœuf local le repère moyen du bœuf. Nous ne connaissons pas l’empreinte précise de ces fournisseurs. Pour les départager, il faudrait leurs pratiques, l’alimentation des animaux, le mode de transport et les garanties contre la déforestation.')
+    st.write('**Les émissions s’additionnent :** cultures et alimentation des animaux, élevage, changements d’usage des terres, énergie, transport, conservation et cuisine. Ce sont plusieurs gaz : CO₂, méthane et protoxyde d’azote notamment. Le CO₂e permet de comparer leurs effets. Les activités qui émettent renforcent l’effet de serre naturel ; l’accumulation du CO₂ contribue au réchauffement durable.')
+    st.markdown('[Repères scientifiques — GIEC](' + IPCC_URL + ')')
+    if len(menus) == 2:
+        long_term_choices(menus)
+
+def long_term_choices(menus):
+    import abc_game as engine
+    total = sum(m['cost'] for m in menus)
+    reference = 2 * engine.cost('regional')
+    saving = reference - total
+    with st.expander('Si ces choix se répètent : 1 à 4 ans, puis au-delà', expanded=True):
+        st.write('**Court terme : les dépenses.** Imaginons 180 jours de cantine par an, soit 90 répétitions de vos deux repas, toujours pour 600 convives. Comparaison : deux menus au poulet régional conventionnel à 2 880 € au total. Cette référence sert à comparer les prix ; ce n’est pas un modèle de variété alimentaire.')
+        st.table([{'Horizon': f'{years} an(s)', 'Dépenses simulées (€)': round(total * 90 * years), 'Économie face à la référence (€), négatif = surcoût': round(saving * 90 * years)} for years in (1, 2, 4)])
+        st.caption('Projection pédagogique à prix constants : aucune inflation, aucun changement de fréquentation. Les prix sont fictifs. Le menu ne devrait pas rester identique toute l’année. La valeur des restes reste comprise dans les achats : on ne la retranche pas une seconde fois.')
+        known = [72 * MEAT_FACTORS[m['id']] for m in menus if m['id'] in MEAT_FACTORS]
+        if known:
+            st.write('**Moyen et long terme : les émissions se répètent aussi.** Voici uniquement la composante viande chiffrée de vos deux repas, répétée dans la même hypothèse. Les autres aliments et étapes non couverts ne sont pas comptés ici.')
+            st.table([{'Durée de répétition': f'{years} an(s)', 'Viande chiffrée : émissions cumulées (tonnes CO₂e)': round(sum(known) * 90 * years / 1000, 1)} for years in (1, 4, 10)])
+        st.write('**Pourquoi regarder plus loin ?** Les émissions de CO₂ s’accumulent et contribuent au réchauffement. Avec le réchauffement, les risques de fortes chaleurs et, selon les régions, de sécheresses et de pluies intenses augmentent. Des récoltes peuvent devenir plus fragiles ; disponibilité et prix peuvent être affectés. Ces risques dépendent aussi des autres émissions, des territoires et des mesures d’adaptation.')
+        st.caption('Les horizons 1, 4 et 10 ans sont des fenêtres de comparaison du jeu, pas les dates annoncées d’une catastrophe. On ne convertit pas les émissions de cette cantine en degrés de réchauffement ni en sécheresse locale. Les tonnes CO₂e cumulées ne décrivent pas exactement l’évolution physique de chaque gaz.')
+        st.success('Question à débattre : ce qui coûte moins cher aujourd’hui est-il forcément le meilleur choix si l’on considère aussi la variété, le gaspillage, les producteurs et le climat ?')
+        st.markdown('[GIEC · Réchauffement, risques et adaptation](' + IPCC_URL + ') · [GIEC · Eau](' + WATER_URL + ')')

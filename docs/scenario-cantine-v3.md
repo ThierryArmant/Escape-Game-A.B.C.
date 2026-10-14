@@ -92,3 +92,16 @@ Sources supplémentaires : https://impactco2.fr/outils/alimentation/boeuf ; http
 Le maître ouvre le bilan avec Suivant sur les quatre écrans. Une dernière carte confronte trois offres fictives pour la viande seule des 600 repas : bœuf brésilien 396 €, poulet brésilien 432 €, porc du Ventoux 504 €. Les repères carbone restent les moyennes ADEME/Agribalyse pour bœuf (28), poulet (4,56) et porc (6,67), en kg CO₂e/kg : ils ne sont pas présentés comme des empreintes mesurées de ces pays ou fournisseurs. Les équivalents illustratifs sont respectivement 18, 3 et 4 allers simples Marseille–Paris, pour 600 portions de 120 g, avec le facteur de 142 g CO₂e/km d'une voiture moyenne diesel et une distance arrondie à 800 km.
 
 Les équipes proposent une offre, une alternance de menus ou une demande d'informations supplémentaires et choisissent un argument. Les trois propositions apparaissent sur les écrans ; le maître affiche ensuite une décision collective. Aucune bonne réponse unique n'est imposée. Le débat interroge l'élevage, l'alimentation animale, les terres, le transport, la traçabilité et la rémunération du producteur. Il ne suppose pas qu'un aliment lointain émet automatiquement davantage qu'un aliment local.
+
+
+## Accueil, actions parallèles et pauses communes
+
+Avant le départ, les trois équipes lisent trois fiches originales sur agriculture et élevage, déforestation, chaîne alimentaire et gaspillage. Le maître démarre le chronomètre.
+
+Les élèves transmettent deux souhaits parmi le catalogue fermé. Le chef peut préparer ses deux menus avec les prix de référence sans attendre le courtier. Le courtier consulte les demandes disponibles et choisit son offre ; les prix des deux menus sont alors recalculés et les accords antérieurs annulés pour vérification.
+
+Chaque décision validée concernant demandes, offres, menus, service, livraison ou bilan ouvre une fiche commune et bloque les actions. Les quatre écrans reçoivent le message au prochain rafraîchissement automatique. Le temps de lecture ne compte pas dans les 30 minutes. Seul le maître reprend le jeu. La pause climatique entre les jours et le passage de manche restent aussi contrôlés par le maître.
+
+Les fiches de choix comparent prix et composante viande de l’empreinte climatique à partir de moyennes ADEME, non de mesures propres aux fournisseurs fictifs. Le transport moyen est déjà inclus ; il n’est pas ajouté une seconde fois. Une origine lointaine ne suffit pas à classer deux produits.
+
+Une projection pédagogique répète les deux repas 90 fois/an (180 jours de cantine). Elle compare les dépenses à 1, 2 et 4 ans à prix constants à deux menus au poulet régional conventionnel. Les émissions cumulées de la viande chiffrée sont présentées à 1, 4 et 10 ans. Il ne s’agit ni d’un plan alimentaire recommandé ni d’une prévision des prix, des degrés de réchauffement ou d’une catastrophe locale. Les autres composantes non chiffrées ne sont pas présentées comme nulles.

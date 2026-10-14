@@ -1,9 +1,21 @@
 import unittest
 from abc_game import Store, cost, harvest, requirements
 
+class GuidedStore(Store):
+    """Simulate the teacher starting and resuming each common reading pause."""
+    def create(self):
+        auth = super().create()
+        self.master = auth
+        super().action(auth, 'start_game')
+        return auth
+    def action(self, auth, action, **values):
+        super().action(auth, action, **values)
+        if self.read(auth).get('reflection'):
+            super().action(self.master, 'resume_reflection')
+
 class ChoiceGameTests(unittest.TestCase):
     def setup_game(self, source='regional', mode='conventionnel'):
-        store=Store();master=store.create();roles={r:store.join(master['code'],r) for r in ('manager','students','supplier')}
+        store=GuidedStore();master=store.create();roles={r:store.join(master['code'],r) for r in ('manager','students','supplier')}
         store.action(roles['supplier'],'production',value=mode,source=source)
         return store,master,roles
     def play(self,source,mode):
@@ -49,8 +61,8 @@ class ChoiceGameTests(unittest.TestCase):
         with self.assertRaises(ValueError):store.action(r['students'],'climate_resume')
         store.action(r['manager'],'plans',first='vegetal',second='regional')
         self.assertEqual(store.read(master)['original_second']['id'],'regional')
-        with self.assertRaises(ValueError):store.action(r['manager'],'plans',first='importe',second='vegetal')
-        self.assertEqual(store.read(master)['first']['id'],'vegetal')
+        store.action(r['manager'],'plans',first='importe',second='vegetal')
+        self.assertEqual(store.read(master)['first']['id'],'importe')
     def test_beef_budget_and_climate(self):
         store, master, r = self.setup_game()
         store.action(r['manager'], 'plans', first='boeuf', second='boeuf')
@@ -65,7 +77,7 @@ class ChoiceGameTests(unittest.TestCase):
         store.action(master, 'next')
         self.assertEqual(store.read(master)['phase'], 2)
     def test_cheaper_beef_offer(self):
-        store=Store();master=store.create();broker=store.join(master['code'],'supplier');chef=store.join(master['code'],'manager')
+        store=GuidedStore();master=store.create();broker=store.join(master['code'],'supplier');chef=store.join(master['code'],'manager')
         store.action(broker,'production',value='conventionnel',source='importe',animal_offer='boeuf_bresil')
         store.action(chef,'plans',first='boeuf_bresil',second='boeuf_bresil')
         self.assertEqual(store.read(master)['first']['cost'] + store.read(master)['second']['cost'],2520)
@@ -75,3 +87,34 @@ class ChoiceGameTests(unittest.TestCase):
         self.assertEqual(cost('vegetal','secheresse',reuse=True),909)
 
 if __name__=='__main__':unittest.main()
+
+class CommonPauseTests(unittest.TestCase):
+    def test_parallel_start_broadcast_pause_and_clock(self):
+        from abc_game import elapsed
+        store = Store(); master = store.create()
+        roles = {r: store.join(master['code'], r) for r in ('students', 'manager', 'supplier')}
+        self.assertEqual(elapsed(store.read(master), now=9999999999), 0)
+        with self.assertRaises(ValueError):
+            store.action(roles['manager'], 'plans', first='vegetal', second='regional')
+        store.action(master, 'start_game')
+        # Chef can send both menus before a broker offer exists.
+        store.action(roles['manager'], 'plans', first='vegetal', second='regional')
+        state = store.read(master)
+        self.assertIsNone(state['production'])
+        self.assertEqual(state['reflection']['role'], 'manager')
+        frozen = elapsed(state, now=9999999999)
+        self.assertEqual(frozen, elapsed(state, now=19999999999))
+        for auth in roles.values():
+            self.assertEqual(store.read(auth)['reflection'], state['reflection'])
+        with self.assertRaises(ValueError):
+            store.action(roles['supplier'], 'production', value='bio')
+        with self.assertRaises(ValueError):
+            store.action(roles['students'], 'resume_reflection')
+        store.action(master, 'resume_reflection')
+        # Pupils can express a request even when menus are already drafted.
+        store.action(roles['students'], 'preferences', first='importe', second='vegetal')
+        store.action(master, 'resume_reflection')
+        store.action(roles['supplier'], 'production', value='bio', source='regional')
+        state = store.read(master)
+        self.assertEqual(state['first']['cost'], cost('vegetal', mode='bio'))
+        self.assertFalse(state['approvals']['students'])

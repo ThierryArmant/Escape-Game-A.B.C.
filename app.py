@@ -8,7 +8,7 @@ def load_cards(revision):
     import climate_cards
     return importlib.reload(climate_cards)
 
-cards = load_cards('abc-cartes-debat-v8')
+cards = load_cards('abc-cartes-pauses-v9')
 climate_pause, menu_consequences, sourcing_card = cards.climate_pause, cards.menu_consequences, cards.sourcing_card
 final_debate = cards.final_debate
 
@@ -18,7 +18,7 @@ def load_engine(revision):
     import abc_game
     return importlib.reload(abc_game)
 
-engine = load_engine('cantine-v3-master-final-card')
+engine = load_engine('cantine-v4-pauses')
 Store, MENUS, SERVICES, ROLES = engine.Store, engine.MENUS, engine.SERVICES, engine.ROLES
 PRODUCTION, SERVICE_LABELS, SELF_SERVICE = engine.PRODUCTION, engine.SERVICE_LABELS, engine.SELF_SERVICE
 cost, harvest, waste, stock_saving = engine.cost, engine.harvest, engine.waste, engine.stock_saving
@@ -80,6 +80,14 @@ def act(action, **values):
 
 def mission(role, s):
     phase = s['phase']
+    if not s.get('game_started', True):
+        return 'Avant le départ', 'Lisez les trois fiches. Le maître lance le jeu lorsque les équipes sont installées.'
+    if s.get('reflection'):
+        return 'Pause de réflexion', 'Une équipe vient de décider. Lisez la conséquence ; le maître reprend ensuite le jeu.'
+    if phase == 1 and not s['first'] and role == 'students':
+        return 'Choisir vos deux menus souhaités', 'Proposez deux repas du catalogue. Le chef et le courtier verront votre demande.'
+    if phase == 1 and role == 'manager' and not s['first']:
+        return 'Préparer vos deux menus', 'Vous pouvez commencer avec les prix de référence. Le choix du courtier actualisera ensuite les prix.'
     menu = (s['first'] if phase == 1 and s['second'] else s['second'] if phase == 3 and s['reviewed'] else None) if phase in (1, 3) else None
     if phase == 3 and not s['climate_ack']:
         return 'Pause commune : comprendre le climat', 'Lisez les six cartes après le premier repas. Le maître reprendra ensuite la mission du jour 2.'
@@ -151,6 +159,11 @@ def supplier_panel(s):
         return
     if not s['production']:
         st.subheader('1 · Vos offres de fournisseur')
+        if s.get('preferences'):
+            st.info('Demande des élèves : ' + ' ; '.join(MENUS[k][0] for k in s['preferences']))
+        if s['first'] and s['second']:
+            st.info('Commande du chef : ' + ' ; '.join(MENUS[s[k]['id']][0] for k in ('first', 'second')))
+            st.table([{'Produit': k, 'Quantité (kg)': v} for k, v in requirements(s).items()])
         st.write('Vous êtes courtier, pas agriculteur : vous choisissez des fournisseurs. Dans ce scénario fictif, l’offre bio est plus chère. Les frais de culture du tableau expliquent le prix du producteur ; ce ne sont pas vos frais de courtier.')
         st.table([{'Mode': v['name'], 'Coût pommes de terre €/kg': v['potato_cost'], 'Vente pommes de terre €/kg': v['potato_price'], 'Coût carottes €/kg': v['carrot_cost'], 'Vente carottes €/kg': v['carrot_price']} for v in PRODUCTION.values()])
         sourcing_card()
@@ -165,7 +178,9 @@ def supplier_panel(s):
     st.caption('Offre légumes choisie : ' + PRODUCTION[s['production']]['name'])
     menu = s['first' if phase == 1 else 'second']
     if not menu or not s['second'] or phase == 3 and not s['reviewed']:
-        st.info('Votre offre est envoyée. Le calcul de récolte apparaîtra dès que le chef cuisinier auront commandé.')
+        st.info('Votre offre est envoyée. Les quantités apparaîtront dès que le chef aura commandé.')
+        if s.get('preferences'):
+            st.write('Les élèves souhaitent : ' + ' ; '.join(MENUS[k][0] for k in s['preferences']))
         return
     st.subheader('Commande des deux jours' if phase == 1 else 'Commande révisée du jour 2')
     st.table([{'Produit': k, 'Quantité à livrer (kg)': v} for k, v in requirements(s).items()])
@@ -201,9 +216,6 @@ def supplier_panel(s):
 def manager_panel(s):
     phase = s['phase']
     if phase in (1, 3):
-        if not s['production']:
-            st.info('Attendez les prix du courtier.')
-            return
         menu = s['first' if phase == 1 else 'second']
         if menu and s['second'] and (phase != 3 or s['reviewed']):
             if phase == 1:
@@ -249,12 +261,14 @@ def plan_two_days(s):
     ])
     st.caption('Ces repères expliquent les choix du jeu ; deux menus ne suffisent pas à valider un plan alimentaire scolaire réel. L’équilibre s’apprécie sur plusieurs repas.')
     st.markdown('[Repères pour les 4–17 ans — Manger Bouger](' + NUTRITION_URL + ')')
-    options = [s['meat_source'], 'vegetal', s['animal_offer']]
-    st.table([{'Plat proposé': MENUS[m][0], 'Prix pour 600 repas (€)': cost(m, mode=s['production'], beef_source=s['beef_source'])} for m in options])
+    options = [k for k in MENUS if k != 'secours']
+    if s.get('preferences'):
+        st.info('Menus souhaités par les élèves : ' + ' ; '.join(MENUS[k][0] for k in s['preferences']))
+    st.table([{'Plat proposé': MENUS[m][0], 'Prix pour 600 repas (€)': cost(m, mode=s['production'] or 'conventionnel', beef_source=s['beef_source'])} for m in options])
     st.caption('Les prix et le budget des deux jours sont calculés pour vous.')
     with st.form('two_days'):
         first = st.selectbox('Jour 1 · Menu', options, format_func=lambda k: MENUS[k][0])
-        second = st.selectbox('Jour 2 · Menu prévu', ['vegetal', s['meat_source'], s['animal_offer']], format_func=lambda k: MENUS[k][0])
+        second = st.selectbox('Jour 2 · Menu prévu', ['vegetal'] + [k for k in options if k != 'vegetal'], format_func=lambda k: MENUS[k][0])
         st.caption('Variez les deux journées. Après le jour 1, vous pourrez revoir le second menu grâce aux mesures de restes et aux nouvelles disponibilités.')
         if st.form_submit_button('Envoyer les deux menus au courtier', type='primary'):
             act('plans', first=first, second=second)
@@ -291,6 +305,17 @@ def menu_picker(s):
 def students_panel(s):
     phase = s['phase']
     if phase in (1, 3):
+        if phase == 1 and not s.get('preferences'):
+            if s.get('preferences'):
+                st.success('Vos souhaits sont transmis : ' + ' ; '.join(MENUS[k][0] for k in s['preferences']))
+            with st.form('preferences'):
+                options = [k for k in MENUS if k != 'secours']
+                first = st.selectbox('Votre plat souhaité au jour 1', options, format_func=lambda k: MENUS[k][0])
+                second = st.selectbox('Votre plat souhaité au jour 2', ['vegetal'] + [k for k in options if k != 'vegetal'], format_func=lambda k: MENUS[k][0])
+                st.caption('Le chef doit aussi tenir compte du budget, de la variété et des offres. Ce sont des souhaits, pas encore la commande.')
+                if st.form_submit_button('Transmettre nos souhaits de menus', type='primary'):
+                    act('preferences', first=first, second=second)
+            return
         menu = s['first' if phase == 1 else 'second']
         if menu and s['second'] and (phase != 3 or s['reviewed']):
             st.subheader('Vos deux repas prévus' if phase == 1 else 'Le repas révisé du jour 2')
@@ -363,7 +388,22 @@ def game():
     except ValueError as exc:
         st.error(str(exc))
         return
-    # Une aide automatique à chaque véritable étape, jamais à chaque frappe dans la calculatrice.
+    role, phase = auth['role'], s['phase']
+    seconds = max(0, 1800 - int(engine.elapsed(s)))
+    st.caption(f'Temps de jeu actif : {seconds // 60} min {seconds % 60:02d} s · Les pauses de lecture ne sont pas décomptées.')
+    if not s.get('game_started', True):
+        cards.welcome_cards()
+        if role == 'master' and st.button('Démarrer le jeu pour toutes les équipes', type='primary'):
+            act('start_game')
+        return
+    if s.get('reflection'):
+        cards.reflection_card(s['reflection'], s, role == 'master', lambda: act('resume_reflection'))
+        return
+    if s.get('notices'):
+        note = s['notices'][-1]
+        st.info('Dernière décision : ' + note['title'] + ' — ' + note['effect'])
+    # Une aide automatique à chaque véritable étape.
+
     role, phase = auth['role'], s['phase']
     title, instruction = mission(role, s)
     context = (auth['code'], role, phase, s['event'], title, instruction, str(s['first']), str(s['second']), s['service'], s['self_service'], s['climate_ack'], s['waste_reviewed'], s.get('debate_decision'), s.get('final_card_visible', False))
@@ -377,8 +417,6 @@ def game():
     st.info(f'**{title}** — {instruction}')
     st.progress((phase - 1) / 4, text='Préparation → Jour 1 → Pause et adaptation → Jour 2 → Bilan')
     st.subheader(['', 'Préparer les deux journées', 'Jour 1 · Servir et mesurer', 'Entre les deux jours · Adapter le menu', 'Jour 2 · Servir et comparer', 'Bilan des deux journées'][phase])
-    seconds = max(0, 1800 - int(time.time() - s['started']))
-    st.caption(f'Temps indicatif : {seconds // 60} min {seconds % 60:02d} s')
     spent = sum(s[k]['cost'] for k in ('first', 'second') if s[k])
     x, y, z = st.columns(3)
     x.metric('Budget disponible sur deux repas', f'{3000 - spent:g} €')
@@ -420,6 +458,7 @@ def game():
     elif role == 'students':
         students_panel(s)
     if phase == 5:
+        cards.choice_footprint(s)
         st.success('Les deux journées sont terminées. Chaque équipe a contribué !')
         st.table([{'Journée': day, 'Restes (kg)': s[key]['waste'], 'Par convive (g)': s[key]['waste'] * 1000 / 600, 'Valeur estimée des restes (€)': round(s[key]['cost'] * s[key]['waste'] / 300)} for day, key in [('Jour 1', 'day1'), ('Jour 2', 'day2')]])
         change = s['day1']['waste'] - s['day2']['waste']
@@ -443,7 +482,7 @@ def game():
             st.write('Entrées et desserts : ' + SELF_SERVICE[s['self_service']][0])
             service_time(s)
     if s['hint']:
-        st.info('Les aides individuelles sont disponibles à chaque calcul. Identifiez ce qui est demandé : une quantité totale, une quantité par élève ou un pourcentage.')
+        st.info('Les choix sont fermés et les résultats sont calculés. Comparez budget, variété, faim et disponibilité avant de choisir.')
     st.caption('Prix, rendements et restes fictifs. Aucun mode de production ne garantit à lui seul un meilleur rendement. A.B.C. est simulé. Le gaspillage ne provoque pas directement l’aléa de cette partie.')
 
 game()

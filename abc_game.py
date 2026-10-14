@@ -95,7 +95,7 @@ def waste(s):
     return max(0, SERVICES[s['service']][1] + SELF_SERVICE[s.get('self_service', 'tout')][1])
 
 def initial():
-    return dict(final_card_visible=False, debate_votes={}, debate_decision=None, waste_reviewed=False, climate_ack=False, animal_offer='boeuf', beef_source='regional', meat_source=None, original_second=None, reviewed=False, day1=None, day2=None, phase=1, event=None, started=time.time(), hint=False, first=None, second=None, service=None, self_service='tout', measure=False, grams_done=False, production=None, harvest_done=False, supply_done=False, supply_strategy=None, approvals={'supplier': False, 'students': False})
+    return dict(game_started=False, active_elapsed=0, active_since=None, reflection=None, notices=[], preferences=None, final_card_visible=False, debate_votes={}, debate_decision=None, waste_reviewed=False, climate_ack=False, animal_offer='boeuf', beef_source='regional', meat_source=None, original_second=None, reviewed=False, day1=None, day2=None, phase=1, event=None, started=time.time(), hint=False, first=None, second=None, service=None, self_service='tout', measure=False, grams_done=False, production=None, harvest_done=False, supply_done=False, supply_strategy=None, approvals={'supplier': False, 'students': False})
 
 def reset_supply(s):
     ready = bool(s['first'] and s['second']) and (s['phase'] == 1 or s['reviewed'])
@@ -103,7 +103,7 @@ def reset_supply(s):
     s.update(harvest_done=ready, supply_done=ready, supply_strategy='direct' if h and h['quantity'] >= h['need'] else None)
     s['approvals'] = {'supplier': False, 'students': False}
 
-def apply(s, role, action, **values):
+def apply_core(s, role, action, **values):
     if role == 'master':
         if action == 'event':
             event = values.get('value')
@@ -176,17 +176,16 @@ def apply(s, role, action, **values):
         s['beef_source'] = values.get('beef_source', 'regional')
         if s['beef_source'] not in ('regional', 'importe'):
             raise ValueError('Offre de bœuf inconnue.')
-        if s['first']:
-            s['first']['cost'] = cost(s['first']['id'], mode=mode)
+        for key in ('first', 'second'):
+            if s[key]:
+                s[key]['cost'] = cost(s[key]['id'], mode=mode, beef_source=s['beef_source'])
         reset_supply(s)
     elif action == 'plans' and role == 'manager' and s['phase'] == 1:
-        if not s['production']:
-            raise ValueError('Attendez les offres du courtier.')
         first, second = values.get('first'), values.get('second')
-        allowed = (s['meat_source'], 'vegetal', s['animal_offer'])
+        allowed = tuple(k for k in MENUS if k != 'secours')
         if first not in allowed or second not in allowed:
             raise ValueError('Choisissez deux menus du catalogue publié par le courtier.')
-        c1, c2 = cost(first, mode=s['production'], beef_source=s['beef_source']), cost(second, mode=s['production'], beef_source=s['beef_source'])
+        c1, c2 = cost(first, mode=s['production'] or 'conventionnel', beef_source=s['beef_source']), cost(second, mode=s['production'] or 'conventionnel', beef_source=s['beef_source'])
         s['first'] = {'id': first, 'cost': c1, 'reuse': False, 'adaptation': None}
         s['second'] = {'id': second, 'cost': c2, 'reuse': False, 'adaptation': None}
         s['original_second'] = copy.deepcopy(s['second'])
@@ -231,7 +230,7 @@ def apply(s, role, action, **values):
             raise ValueError('Attendez la proposition du chef cuisinier.')
         if s['first']['cost'] + s['second']['cost'] > 3000:
             raise ValueError('Les deux menus dépassent le budget. Le chef doit revoir sa prévision avant de commander.')
-        if role == 'supplier' and not (s['harvest_done'] and s['supply_done'] and s['supply_strategy']):
+        if role == 'supplier' and not (s['production'] and s['harvest_done'] and s['supply_done'] and s['supply_strategy']):
             raise ValueError('Terminez votre calcul et la vérification de la commande avant de confirmer.')
         s['approvals'][role] = True
     elif action == 'service' and role == 'students' and s['phase'] in (2, 4):
@@ -256,6 +255,61 @@ def apply(s, role, action, **values):
         s['measure'] = True
     else:
         raise ValueError('Action non disponible pour votre rôle.')
+
+def elapsed(s, now=None):
+    now = time.time() if now is None else now
+    if 'game_started' not in s:
+        return max(0, now - s['started'])
+    return s.get('active_elapsed', 0) + (max(0, now - s['active_since']) if s.get('active_since') else 0)
+
+REFLECTIONS = {
+    'preferences': ('students', 'Vos envies deviennent une demande', 'Le courtier et le chef voient les deux menus souhaités.', 'Choisir un plat engage des achats, un budget et des ressources. Une envie peut-elle être satisfaite tous les jours ?', 'cattle'),
+    'production': ('supplier', 'Le courtier publie ses offres', 'Les prix des deux menus sont mis à jour avec le choix bio ou conventionnel.', 'Le prix seul ne raconte pas tout : origine, pratiques et traçabilité comptent aussi. Que faudrait-il demander au fournisseur ?', 'farm'),
+    'plans': ('manager', 'Deux menus deviennent deux commandes', 'Le courtier reçoit les quantités nécessaires ; les élèves peuvent valider les repas.', 'Comparez le coût et la variété. Deux repas au bœuf utilisent davantage de budget et ont une empreinte climatique élevée par rapport au poulet, à poids égal.', 'cattle'),
+    'menu': ('manager', 'Le deuxième menu est adapté', 'La nouvelle commande tient compte de la sécheresse et du stock utilisable.', 'Utiliser les réserves et modifier la recette aide à continuer le service. Les déchets de plateaux ne sont pas réutilisés.', 'drought'),
+    'service': ('students', 'Le service change les restes', 'Les restes simulés et leur valeur sont maintenant visibles au chef.', 'Une petite portion avec complément peut éviter de jeter. Le temps de passage compte aussi : il faut garder du temps pour manger.', 'waste'),
+    'review_waste': ('manager', 'La mesure A.B.C. guide la suite', 'Le chef a pris en compte la nourriture achetée mais non mangée.', 'Jeter gaspille aussi les ressources utilisées avant le plateau. Un repas jeté ne provoque pas à lui seul une sécheresse.', 'waste'),
+    'strategy': ('supplier', 'Une récolte insuffisante oblige à remplacer', 'Le courtier organise le complément ; le surcoût est inclus dans le menu.', 'La sécheresse fragilise les récoltes. Réserves, partenaires et recettes adaptables donnent plusieurs moyens de réagir.', 'drought'),
+    'approve': (None, 'Une équipe confirme le repas', 'Son accord apparaît sur tous les écrans.', 'Le même repas doit pouvoir être fourni, payé et mangé. Pourquoi l’accord de chaque équipe est-il utile ?', 'farm'),
+}
+
+def apply(s, role, action, **values):
+    if action == 'start_game' and role == 'master':
+        if s.get('game_started', True):
+            raise ValueError('La partie a déjà commencé.')
+        s.update(game_started=True, active_since=time.time())
+        return
+    if action == 'resume_reflection' and role == 'master':
+        if not s.get('reflection'):
+            raise ValueError('Aucune pause de lecture en cours.')
+        s.update(reflection=None, active_since=time.time())
+        return
+    if not s.get('game_started', True):
+        raise ValueError('Le maître lancera la partie après la lecture des fiches.')
+    if s.get('reflection'):
+        raise ValueError('Pause de lecture : le maître reprend ensuite le jeu.')
+    if action == 'preferences' and role == 'students' and s['phase'] == 1:
+        choices = [values.get('first'), values.get('second')]
+        if any(k not in MENUS or k == 'secours' for k in choices):
+            raise ValueError('Choisissez deux menus du catalogue.')
+        s['preferences'] = choices
+    else:
+        apply_core(s, role, action, **values)
+    if s['phase'] == 5 and s.get('active_since'):
+        s['active_elapsed'] = elapsed(s)
+        s['active_since'] = None
+    if action in REFLECTIONS:
+        _, title, effect, question, photo = REFLECTIONS[action]
+        note = {'role': role, 'title': title, 'effect': effect, 'question': question, 'photo': photo, 'number': len(s.get('notices', [])) + 1}
+        s.setdefault('notices', []).append(note)
+        s['notices'] = s['notices'][-30:]
+        s['active_elapsed'] = elapsed(s)
+        s.update(active_since=None, reflection=note)
+    elif action == 'next' and s['phase'] == 3:
+        s['active_elapsed'] = elapsed(s)
+        s['active_since'] = None
+    elif action == 'climate_resume':
+        s['active_since'] = time.time()
 
 class Store:
     def __init__(self):
