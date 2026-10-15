@@ -71,6 +71,20 @@ store.__class__ = Store
 st.title('🌱 Escape Game A.B.C.')
 st.caption('600 repas · Trois équipes · Une réussite collective')
 
+def master_recovery():
+    with st.form('resume_master'):
+        st.write('Saisissez le code de votre partie pour retrouver les commandes du maître du jeu. Les choix des équipes sont conservés.')
+        recovery_code = st.text_input('Code de la partie à reprendre', max_chars=6)
+        if st.form_submit_button('Reprendre la main'):
+            try:
+                st.session_state.auth = store.resume_master(recovery_code)
+                st.query_params.clear()
+                for key in ('mission_context', 'mission_pending', 'abc_error'):
+                    st.session_state.pop(key, None)
+                st.rerun()
+            except ValueError as exc:
+                st.error(str(exc))
+
 # A team URL reconnects to the same in-memory session after browser reload.
 if 'auth' not in st.session_state:
     return_code = st.query_params.get('partie', '').strip().upper()
@@ -93,6 +107,8 @@ if 'auth' not in st.session_state:
                 st.rerun()
             except ValueError as exc:
                 st.error(str(exc))
+        with st.expander('Reprendre une partie avec son code', expanded=True):
+            master_recovery()
     with b:
         with st.form('join'):
             st.subheader('Rejoindre une équipe')
@@ -109,6 +125,8 @@ if 'auth' not in st.session_state:
 
 auth = st.session_state.auth
 if auth['role'] != 'master':
+    with st.expander('Je suis le maître du jeu · Reprendre la main'):
+        master_recovery()
     if st.query_params.get('partie') != auth['code'] or st.query_params.get('equipe') != auth['role']:
         st.query_params.from_dict({'partie': auth['code'], 'equipe': auth['role']})
     with st.expander('Point de retour de mon équipe'):

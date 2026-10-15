@@ -430,6 +430,13 @@ class Store:
             tokens.setdefault(role, secrets.token_urlsafe(32))
             return {'code': code, 'role': role, 'token': tokens[role]}
 
+    def resume_master(self, code):
+        with self.lock:
+            code = code.strip().upper()
+            if code not in self.sessions:
+                raise ValueError('Partie introuvable ou expirée. Vérifiez le code. Si le serveur a redémarré, il faut créer une nouvelle partie.')
+            return {'code': code, 'role': 'master', 'token': self.sessions[code]['tokens']['master']}
+
     def _session(self, auth):
         session = self.sessions.get(auth['code'])
         if not session or session['tokens'].get(auth['role']) != auth['token']:

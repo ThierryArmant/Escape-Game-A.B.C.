@@ -173,3 +173,20 @@ class CrisisCoherenceTests(unittest.TestCase):
         self.assertEqual(s['day1'],before)
         self.assertEqual(s['session_since'],123)
         self.assertTrue(s['climate_ack'])
+
+class MasterRecoveryTests(unittest.TestCase):
+    def test_recovery_preserves_game_and_team_access(self):
+        store = Store()
+        master = store.create()
+        pupil = store.join(master['code'], 'students')
+        store.action(master, 'start_game')
+        store.action(pupil, 'preferences', first='regional', second='vegetal')
+        before = store.read(pupil)
+        recovered = store.resume_master(' ' + master['code'].lower() + ' ')
+        self.assertEqual(recovered, master)
+        self.assertEqual(store.read(recovered), before)
+        self.assertEqual(store.read(pupil), before)
+        store.action(recovered, 'event', value='secheresse')
+        self.assertEqual(store.read(pupil)['event'], 'secheresse')
+        with self.assertRaises(ValueError):
+            store.resume_master('ZZZZZZ')
