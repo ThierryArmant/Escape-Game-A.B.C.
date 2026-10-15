@@ -86,7 +86,7 @@ if 'auth' not in st.session_state:
     a, b = st.columns(2)
     with a:
         st.subheader('Écran du maître du jeu')
-        st.write('Créez une partie, puis communiquez son code aux trois équipes.')
+        st.write('Créez une partie, puis partagez les liens d’invitation avec les trois équipes.')
         if st.button('Créer une partie', type='primary'):
             try:
                 st.session_state.auth = store.create()
@@ -96,7 +96,7 @@ if 'auth' not in st.session_state:
     with b:
         with st.form('join'):
             st.subheader('Rejoindre une équipe')
-            code = st.text_input('Code de la partie', max_chars=6).strip().upper()
+            code = st.text_input('Code de la partie', value=st.query_params.get('partie', '').strip().upper()[:6], max_chars=6).strip().upper()
             role = st.selectbox('Équipe', ['students', 'manager', 'supplier'], format_func=ROLES.get)
             if st.form_submit_button('Rejoindre'):
                 try:
@@ -128,6 +128,17 @@ if auth['role'] != 'master':
 
 st.info(f"{ROLES[auth['role']]} · Code : {auth['code']}")
 if auth['role'] == 'master':
+    with st.expander('🔗 Inviter les joueurs', expanded=True):
+        st.write('Partagez le lien commun : chaque groupe choisit son équipe. Pour attribuer les rôles à l’avance, utilisez les liens par équipe.')
+        invitation_base = 'https://escape-game-abc-cantine.streamlit.app/'
+        invitation_url = invitation_base + '?partie=' + auth['code']
+        st.caption('Lien commun · Survolez le lien puis utilisez l’icône de copie à droite.')
+        st.code(invitation_url, language=None)
+        with st.expander('Liens directs pour les trois équipes'):
+            for team_role in ('students', 'manager', 'supplier'):
+                st.write(ROLES[team_role])
+                st.code(invitation_url + '&equipe=' + team_role, language=None)
+        st.caption('Une tablette par équipe. Ces liens donnent accès à la partie en cours ; ils restent valables tant que le serveur conserve cette partie.')
     if st.button('Arrêter et remettre la partie à zéro'):
         try:
             store.action(auth, 'reset_game')
