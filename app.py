@@ -19,7 +19,7 @@ def load_engine(revision):
     return isolated_module('abc_game.py', revision)
 
 cards = load_cards('abc-cartes-claires-v24-safe')
-engine = load_engine('cantine-v6-clear-drought-safe')
+engine = load_engine('cantine-v7-master-recovery')
 cards.GAME_ENGINE = engine
 climate_pause, menu_consequences, sourcing_card = cards.climate_pause, cards.menu_consequences, cards.sourcing_card
 final_debate = cards.final_debate
